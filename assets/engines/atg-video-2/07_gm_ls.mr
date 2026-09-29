@@ -23,7 +23,7 @@ private node ls_v8_head {
     input intake_runner_volume: 149.6 * units.cc;
     input intake_runner_cross_section_area: 2.2 * units.inch * 2.2 * units.inch;
     input exhaust_runner_volume: 50.0 * units.cc;
-    input exhaust_runner_cross_section_area: 1.75 * units.inch * 1.75 * units.inch;
+    input exhaust_runner_cross_section_area: 1.5 * units.inch * 1.5 * units.inch;
 
     input flow_attenuation: 1.0;
     input lift_scale: 1.0;
@@ -80,7 +80,7 @@ private node ls_v8_camshaft {
     input lobe_separation: 114 * units.deg;
     input intake_lobe_center: lobe_separation;
     input exhaust_lobe_center: lobe_separation;  
-    input advance: 0 * units.deg; 
+    input advance: 10 * units.deg; 
     input base_radius: 0.5 * units.inch;
 
     output intake_cam_0: _intake_cam_0;
@@ -246,15 +246,15 @@ public node ls_v8 {
     
     exhaust_system exhaust0(
         es_params,
-        audio_volume: 4.0,
+        audio_volume: 8.0,
         length: 100 * units.inch,
         impulse_response: ir_lib.default_0
 
     )
     exhaust_system exhaust1(
         es_params,
-        audio_volume: 4.0,
-        length: 172 * units.inch,
+        audio_volume: 1.0,
+        length: 100 * units.inch,
         impulse_response: ir_lib.default_0
     )
 
@@ -263,7 +263,7 @@ public node ls_v8 {
         deck_height: stroke / 2 + rod_length + compression_height
     )
 
-    label spacing(2 * units.inch)
+    label spacing(0 * units.inch)
 
     cylinder_bank b0(bank_params, angle: -v_angle / 2.0)
     cylinder_bank b1(bank_params, angle: v_angle / 2.0)
@@ -430,15 +430,26 @@ private node corvette {
             drag_coefficient: 0.3,
             cross_sectional_area: (72 * units.inch) * (50 * units.inch),
             diff_ratio: 3.42,
-            tire_radius: 10 * units.inch,
-            rolling_resistance: 200 * units.N
+            tire_radius: 16 * units.inch,
+            rolling_resistance: 200 * units.N,
+            stiffness: 50 * units.lb_ft / units.deg,
+            damping: 15.0,
+            max_flex: 5 * units.deg,
+            limit_flex: true,
+            simulate_flex: true,
+            max_brake_force: 10000 * units.N
         );
 }
 
 private node corvette_transmission {
     alias output __out:
         transmission(
-            max_clutch_torque: 500 * units.lb_ft
+            max_clutch_torque: 600 * units.lb_ft,
+            max_clutch_flex: 5 * units.deg,
+            limit_clutch_flex: true,
+            clutch_stiffness: 50 * units.lb_ft / units.deg,
+            clutch_damping: 2.0,
+            simulate_flex: true
         )
         .add_gear(2.97)
         .add_gear(2.07)
@@ -449,7 +460,11 @@ private node corvette_transmission {
 }
 
 public node main {
-    set_engine(ls_v8())
-    set_vehicle(corvette())
-    set_transmission(corvette_transmission())
+    run(
+        engine: ls_v8(),
+        vehicle: corvette(),
+        transmission: corvette_transmission()
+    )
 }
+
+main()

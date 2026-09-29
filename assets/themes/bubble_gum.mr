@@ -1,4 +1,4 @@
-import "engine_sim.mr"
+import "engine_sim_theme.mr"
 
 unit_names units()
 public node use_bubble_gum_theme {
@@ -29,3 +29,5 @@ public node use_bubble_gum_theme {
         color_green: 0xd7f7d2
     )
 }
+
+use_bubble_gum_theme()

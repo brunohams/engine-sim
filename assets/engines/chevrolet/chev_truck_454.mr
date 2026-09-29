@@ -76,7 +76,7 @@ public node chev_truck_454 {
     chevy_bbc_stock_intake intake(
         carburetor_cfm: 650.0,
         idle_flow_rate_cfm: 0.007,
-        idle_throttle_plate_position: 0.991
+        idle_throttle_plate_position: 0.993
     )
 
     exhaust_system_parameters es_params(
@@ -226,3 +226,46 @@ public node chev_truck_454 {
         )
     )
 }
+
+private node corvette {
+    alias output __out:
+        vehicle(
+            mass: 1614 * units.kg,
+            drag_coefficient: 0.3,
+            cross_sectional_area: (72 * units.inch) * (50 * units.inch),
+            diff_ratio: 3.42,
+            tire_radius: 16 * units.inch,
+            rolling_resistance: 200 * units.N,
+            stiffness: 50 * units.lb_ft / units.deg,
+            damping: 15.0,
+            max_flex: 5 * units.deg,
+            limit_flex: true,
+            simulate_flex: true
+        );
+}
+
+private node corvette_transmission {
+    alias output __out:
+        transmission(
+            max_clutch_torque: 600 * units.lb_ft,
+            max_clutch_flex: 5 * units.deg,
+            limit_clutch_flex: true,
+            clutch_stiffness: 50 * units.lb_ft / units.deg,
+            clutch_damping: 2.0,
+            simulate_flex: true
+        )
+        .add_gear(2.97)
+        .add_gear(2.07)
+        .add_gear(1.43)
+        .add_gear(1.00)
+        .add_gear(0.71)
+        .add_gear(0.57);
+}
+
+public node main {
+    set_engine(chev_truck_454())
+    set_vehicle(corvette())
+    set_transmission(corvette_transmission())
+}
+
+main()

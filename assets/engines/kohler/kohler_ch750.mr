@@ -151,3 +151,11 @@ public node kohler_ch750 {
             rev_limit: 5000 * units.rpm
         ))
 }
+
+public node main {
+    set_engine(kohler_ch750())
+    set_transmission(transmission())
+    set_vehicle(vehicle(mass: 500 * units.kg))
+}
+
+main()

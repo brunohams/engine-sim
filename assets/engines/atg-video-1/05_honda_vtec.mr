@@ -323,8 +323,8 @@ public node honda_vtec_i4 {
         .add_sample(0000 * units.rpm, -25 * units.deg)
         .add_sample(1000 * units.rpm, -25 * units.deg)
         .add_sample(2000 * units.rpm, -30 * units.deg)
-        .add_sample(3000 * units.rpm, -40 * units.deg)
-        .add_sample(4000 * units.rpm, -40 * units.deg)
+        .add_sample(3000 * units.rpm, -30 * units.deg)
+        .add_sample(4000 * units.rpm, -30 * units.deg)
 
     ignition_module ignition_module(
         timing_curve: timing_curve,
@@ -364,7 +364,11 @@ private node integra_type_r_transmission {
 }
 
 public node main {
-    set_engine(honda_vtec_i4())
-    set_vehicle(integra_type_r())
-    set_transmission(integra_type_r_transmission())
+    run(
+        engine: honda_vtec_i4(),
+        transmission: integra_type_r_transmission(),
+        vehicle: integra_type_r()
+    )
 }
+
+main()

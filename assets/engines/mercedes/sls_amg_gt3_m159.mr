@@ -1,0 +1,463 @@
+import "engine_sim.mr"
+
+units units()
+constants constants()
+impulse_response_library ir_lib()
+label cycle(2 * 360 * units.deg)
+
+// ====================================================================
+// 2014 Mercedes-Benz SLS AMG GT3
+// Engine: Mercedes-AMG M159 6.2L Naturally Aspirated V8
+// Bore x Stroke: 102.2 mm x 94.6 mm (6,208 cc)
+// Firing Order: 1 - 5 - 4 - 2 - 6 - 3 - 7 - 8 (Cross-Plane 90° V8)
+// Redline: 8,200 RPM (GT3 Race Specification)
+// ====================================================================
+
+private node wires {
+    output wire1: ignition_wire();
+    output wire2: ignition_wire();
+    output wire3: ignition_wire();
+    output wire4: ignition_wire();
+    output wire5: ignition_wire();
+    output wire6: ignition_wire();
+    output wire7: ignition_wire();
+    output wire8: ignition_wire();
+}
+
+// AMG M159 DOHC 32-Valve High-Flow Cylinder Head
+private node amg_m159_head {
+    input intake_camshaft;
+    input exhaust_camshaft;
+    input chamber_volume: 68.0 * units.cc;
+    input flip_display: false;
+    alias output __out: head;
+
+    function intake_flow(50 * units.thou)
+    intake_flow
+        .add_flow_sample(0, 0)
+        .add_flow_sample(50, 42)
+        .add_flow_sample(100, 95)
+        .add_flow_sample(150, 160)
+        .add_flow_sample(200, 222)
+        .add_flow_sample(250, 275)
+        .add_flow_sample(300, 318)
+        .add_flow_sample(350, 345)
+        .add_flow_sample(400, 360)
+        .add_flow_sample(450, 370)
+        .add_flow_sample(500, 375)
+
+    function exhaust_flow(50 * units.thou)
+    exhaust_flow
+        .add_flow_sample(0, 0)
+        .add_flow_sample(50, 35)
+        .add_flow_sample(100, 78)
+        .add_flow_sample(150, 130)
+        .add_flow_sample(200, 180)
+        .add_flow_sample(250, 222)
+        .add_flow_sample(300, 252)
+        .add_flow_sample(350, 270)
+        .add_flow_sample(400, 282)
+        .add_flow_sample(450, 288)
+        .add_flow_sample(500, 292)
+
+    generic_cylinder_head head(
+        chamber_volume: chamber_volume,
+        intake_runner_volume: 180.0 * units.cc,
+        intake_runner_cross_section_area: 28.0 * units.cm2,
+        exhaust_runner_volume: 75.0 * units.cc,
+        exhaust_runner_cross_section_area: 20.0 * units.cm2,
+
+        intake_port_flow: intake_flow,
+        exhaust_port_flow: exhaust_flow,
+        valvetrain: standard_valvetrain(
+            intake_camshaft: intake_camshaft,
+            exhaust_camshaft: exhaust_camshaft
+        ),
+        flip_display: flip_display
+    )
+}
+
+// AMG M159 Camshaft Builder
+// Firing Order: 1 - 5 - 4 - 2 - 6 - 3 - 7 - 8
+private node amg_m159_camshaft_builder {
+    input lobe_profile;
+    input intake_lobe_profile: lobe_profile;
+    input exhaust_lobe_profile: lobe_profile;
+    input lobe_separation: 112.0 * units.deg;
+    input intake_lobe_center: lobe_separation;
+    input exhaust_lobe_center: lobe_separation;
+    input advance: 0.0 * units.deg;
+    input base_radius: 0.60 * units.inch;
+
+    output intake_cam_0: _intake_cam_0;
+    output exhaust_cam_0: _exhaust_cam_0;
+    output intake_cam_1: _intake_cam_1;
+    output exhaust_cam_1: _exhaust_cam_1;
+
+    camshaft_parameters params(
+        advance: advance,
+        base_radius: base_radius
+    )
+
+    camshaft _intake_cam_0(params, lobe_profile: intake_lobe_profile)
+    camshaft _exhaust_cam_0(params, lobe_profile: exhaust_lobe_profile)
+    camshaft _intake_cam_1(params, lobe_profile: intake_lobe_profile)
+    camshaft _exhaust_cam_1(params, lobe_profile: exhaust_lobe_profile)
+
+    // Cam turns at half crankshaft speed: 90 deg crank = 45 deg cam
+    label rot45(45 * units.deg)
+    label rot360(360 * units.deg)
+
+    // Bank 0 (Right: Cyl 1, 2, 3, 4)
+    // Cyl 1 fires at 0 deg crank (+0 * rot45)
+    // Cyl 2 fires at 270 deg crank (+3 * rot45)
+    // Cyl 3 fires at 450 deg crank (+5 * rot45)
+    // Cyl 4 fires at 180 deg crank (+2 * rot45)
+    _exhaust_cam_0
+        .add_lobe(rot360 - exhaust_lobe_center + 0 * rot45) // Cyl 1
+        .add_lobe(rot360 - exhaust_lobe_center + 3 * rot45) // Cyl 2
+        .add_lobe(rot360 - exhaust_lobe_center + 5 * rot45) // Cyl 3
+        .add_lobe(rot360 - exhaust_lobe_center + 2 * rot45) // Cyl 4
+
+    _intake_cam_0
+        .add_lobe(rot360 + intake_lobe_center + 0 * rot45)  // Cyl 1
+        .add_lobe(rot360 + intake_lobe_center + 3 * rot45)  // Cyl 2
+        .add_lobe(rot360 + intake_lobe_center + 5 * rot45)  // Cyl 3
+        .add_lobe(rot360 + intake_lobe_center + 2 * rot45)  // Cyl 4
+
+    // Bank 1 (Left: Cyl 5, 6, 7, 8)
+    // Cyl 5 fires at 90 deg crank (+1 * rot45)
+    // Cyl 6 fires at 360 deg crank (+4 * rot45)
+    // Cyl 7 fires at 540 deg crank (+6 * rot45)
+    // Cyl 8 fires at 630 deg crank (+7 * rot45)
+    _exhaust_cam_1
+        .add_lobe(rot360 - exhaust_lobe_center + 1 * rot45) // Cyl 5
+        .add_lobe(rot360 - exhaust_lobe_center + 4 * rot45) // Cyl 6
+        .add_lobe(rot360 - exhaust_lobe_center + 6 * rot45) // Cyl 7
+        .add_lobe(rot360 - exhaust_lobe_center + 7 * rot45) // Cyl 8
+
+    _intake_cam_1
+        .add_lobe(rot360 + intake_lobe_center + 1 * rot45)  // Cyl 5
+        .add_lobe(rot360 + intake_lobe_center + 4 * rot45)  // Cyl 6
+        .add_lobe(rot360 + intake_lobe_center + 6 * rot45)  // Cyl 7
+        .add_lobe(rot360 + intake_lobe_center + 7 * rot45)  // Cyl 8
+}
+
+// AMG M159 Distributor: Firing Order 1 - 5 - 4 - 2 - 6 - 3 - 7 - 8
+private node amg_m159_distributor {
+    input wires;
+    input timing_curve;
+    input rev_limit: 9000 * units.rpm;
+    alias output __out:
+        ignition_module(timing_curve: timing_curve, rev_limit: rev_limit)
+            .connect_wire(wires.wire1, (0.0 / 8.0) * cycle)
+            .connect_wire(wires.wire5, (1.0 / 8.0) * cycle)
+            .connect_wire(wires.wire4, (2.0 / 8.0) * cycle)
+            .connect_wire(wires.wire2, (3.0 / 8.0) * cycle)
+            .connect_wire(wires.wire6, (4.0 / 8.0) * cycle)
+            .connect_wire(wires.wire3, (5.0 / 8.0) * cycle)
+            .connect_wire(wires.wire7, (6.0 / 8.0) * cycle)
+            .connect_wire(wires.wire8, (7.0 / 8.0) * cycle);
+}
+
+public node sls_amg_gt3_m159 {
+    alias output __out: engine;
+
+    engine engine(
+        name: "Mercedes-AMG M159 6.2L V8 (SLS GT3)",
+        starter_torque: 220 * units.lb_ft,
+        starter_speed: 900 * units.rpm,
+        redline: 9000 * units.rpm,
+        fuel: fuel(
+            max_burning_efficiency: 0.92,
+            burning_efficiency_randomness: 0.25,
+            max_turbulence_effect: 3.5
+        ),
+        throttle_gamma: 1.6,
+        hf_gain: 0.015,
+        noise: 0.40,
+        jitter: 0.35,
+        simulation_frequency: 14000
+    )
+
+    wires wires()
+
+    label stroke(94.6 * units.mm)
+    label bore(102.2 * units.mm)
+    label rod_length(154.0 * units.mm)
+    label rod_mass(580 * units.g)
+    label compression_height(31.7 * units.mm)
+    label crank_mass(24 * units.kg)
+    label flywheel_mass(6.5 * units.kg) // GT3 lightweight multi-disc racing clutch
+
+    label crank_moment(
+        disk_moment_of_inertia(mass: crank_mass, radius: stroke / 2)
+    )
+    label flywheel_moment(
+        disk_moment_of_inertia(mass: flywheel_mass, radius: 7.0 * units.inch)
+    )
+
+    label v_angle(90 * units.deg)
+
+    // Cross-Plane Crankshaft with 90 deg journal offsets
+    crankshaft c0(
+        throw: stroke / 2,
+        flywheel_mass: flywheel_mass,
+        mass: crank_mass,
+        friction_torque: 18.0 * units.lb_ft,
+        moment_of_inertia: crank_moment + flywheel_moment,
+        position_x: 0.0,
+        position_y: 0.0,
+        tdc: 90 * units.deg + (v_angle / 2.0)
+    )
+
+    // Journal 0: Cyl 1 & 5 (0 deg)
+    // Journal 1: Cyl 2 & 6 (270 deg / -90 deg)
+    // Journal 2: Cyl 3 & 7 (90 deg)
+    // Journal 3: Cyl 4 & 8 (180 deg)
+    rod_journal rj0(angle: 0.0 * units.deg)
+    rod_journal rj1(angle: 270.0 * units.deg)
+    rod_journal rj2(angle: 90.0 * units.deg)
+    rod_journal rj3(angle: 180.0 * units.deg)
+
+    c0
+        .add_rod_journal(rj0)
+        .add_rod_journal(rj1)
+        .add_rod_journal(rj2)
+        .add_rod_journal(rj3)
+
+    piston_parameters piston_params(
+        mass: 460 * units.g,
+        compression_height: compression_height,
+        wrist_pin_position: 0.0,
+        displacement: 0.0
+    )
+
+    connecting_rod_parameters cr_params(
+        mass: rod_mass,
+        moment_of_inertia: rod_moment_of_inertia(mass: rod_mass, length: rod_length),
+        center_of_mass: 0.0,
+        length: rod_length
+    )
+
+    cylinder_bank_parameters bank_params(
+        bore: bore,
+        deck_height: rod_length + compression_height + stroke / 2 + 0.6 * units.mm
+    )
+
+    // Dual-Plenum GT3 Magnesium Racing Intake
+    intake intake(
+        plenum_volume: 3.5 * units.L,
+        plenum_cross_section_area: 45.0 * units.cm2,
+        intake_flow_rate: k_carb(950.0),
+        runner_flow_rate: k_carb(380.0),
+        runner_length: 8.0 * units.inch,
+        idle_flow_rate: k_carb(0.02),
+        idle_throttle_plate_position: 0.988,
+        throttle_gamma: 1.5
+    )
+
+    // SLS AMG GT3 Side-Exit Racing Exhaust
+    exhaust_system_parameters es_params(
+        outlet_flow_rate: k_carb(900.0),
+        primary_tube_length: 14.0 * units.inch,
+        primary_flow_rate: k_carb(350.0),
+        velocity_decay: 0.85,
+        volume: 20.0 * units.L,
+        length: 45.0 * units.inch
+    )
+
+    exhaust_system exhaust0(
+        es_params,
+        audio_volume: 3.8,
+        impulse_response: ir_lib.default_0
+    )
+    exhaust_system exhaust1(
+        es_params,
+        audio_volume: 3.8,
+        impulse_response: ir_lib.default_0
+    )
+
+    label spacing(108.0 * units.mm) // Cylinder bore spacing
+
+    // Bank 0 (Right bank at -45 deg: Cylinders 1, 2, 3, 4)
+    cylinder_bank b0(bank_params, angle: -45.0 * units.deg)
+    b0
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj0,
+            ignition_wire: wires.wire1,
+            intake: intake,
+            exhaust_system: exhaust0,
+            primary_length: spacing * 0.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj1,
+            ignition_wire: wires.wire2,
+            intake: intake,
+            exhaust_system: exhaust0,
+            primary_length: spacing * 1.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj2,
+            ignition_wire: wires.wire3,
+            intake: intake,
+            exhaust_system: exhaust0,
+            primary_length: spacing * 2.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj3,
+            ignition_wire: wires.wire4,
+            intake: intake,
+            exhaust_system: exhaust0,
+            primary_length: spacing * 3.5
+        )
+
+    // Bank 1 (Left bank at +45 deg: Cylinders 5, 6, 7, 8)
+    cylinder_bank b1(bank_params, angle: 45.0 * units.deg)
+    b1
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj0,
+            ignition_wire: wires.wire5,
+            intake: intake,
+            exhaust_system: exhaust1,
+            primary_length: spacing * 0.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj1,
+            ignition_wire: wires.wire6,
+            intake: intake,
+            exhaust_system: exhaust1,
+            primary_length: spacing * 1.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj2,
+            ignition_wire: wires.wire7,
+            intake: intake,
+            exhaust_system: exhaust1,
+            primary_length: spacing * 2.5
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.1)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj3,
+            ignition_wire: wires.wire8,
+            intake: intake,
+            exhaust_system: exhaust1,
+            primary_length: spacing * 3.5
+        )
+
+    engine
+        .add_cylinder_bank(b0)
+        .add_cylinder_bank(b1)
+        .add_crankshaft(c0)
+
+    // High-lift AMG GT3 Camshaft Profile
+    harmonic_cam_lobe lobe(
+        duration_at_50_thou: 252 * units.deg,
+        gamma: 1.15,
+        lift: 480 * units.thou,
+        steps: 100
+    )
+
+    amg_m159_camshaft_builder camshaft(
+        lobe_profile: lobe,
+        lobe_separation: 112 * units.deg,
+        base_radius: 0.60 * units.inch
+    )
+
+    b0.set_cylinder_head(
+        amg_m159_head(
+            intake_camshaft: camshaft.intake_cam_0,
+            exhaust_camshaft: camshaft.exhaust_cam_0
+        )
+    )
+
+    b1.set_cylinder_head(
+        amg_m159_head(
+            intake_camshaft: camshaft.intake_cam_1,
+            exhaust_camshaft: camshaft.exhaust_cam_1,
+            flip_display: true
+        )
+    )
+
+    // Ignition Advance Timing Curve
+    function timing_curve(1000 * units.rpm)
+    timing_curve
+        .add_sample(0000 * units.rpm, 18 * units.deg)
+        .add_sample(1000 * units.rpm, 22 * units.deg)
+        .add_sample(2000 * units.rpm, 28 * units.deg)
+        .add_sample(3000 * units.rpm, 32 * units.deg)
+        .add_sample(4000 * units.rpm, 35 * units.deg)
+        .add_sample(5000 * units.rpm, 37 * units.deg)
+        .add_sample(6000 * units.rpm, 38 * units.deg)
+        .add_sample(7000 * units.rpm, 38 * units.deg)
+        .add_sample(8000 * units.rpm, 39 * units.deg)
+        .add_sample(9000 * units.rpm, 40 * units.deg)
+
+    engine.add_ignition_module(
+        amg_m159_distributor(
+            wires: wires,
+            timing_curve: timing_curve,
+            rev_limit: 9050 * units.rpm
+        )
+    )
+}
+
+// 2014 Mercedes-Benz SLS AMG GT3 Vehicle Body
+private node sls_amg_gt3_vehicle {
+    alias output __out:
+        vehicle(
+            mass: 1350 * units.kg,
+            drag_coefficient: 0.42,
+            cross_sectional_area: 2.15 * units.m2,
+            diff_ratio: 3.44,
+            tire_radius: 340 * units.mm,
+            rolling_resistance: 320 * units.N,
+            stiffness: 70 * units.lb_ft / units.deg,
+            damping: 20.0,
+            max_flex: 4 * units.deg,
+            limit_flex: true,
+            simulate_flex: true
+        );
+}
+
+// Hewland 6-Speed Sequential Racing Transmission
+private node sls_amg_gt3_transmission {
+    alias output __out:
+        transmission(
+            max_clutch_torque: 850 * units.lb_ft,
+            max_clutch_flex: 4 * units.deg,
+            limit_clutch_flex: true,
+            clutch_stiffness: 80 * units.lb_ft / units.deg,
+            clutch_damping: 3.0,
+            simulate_flex: true
+        )
+        .add_gear(2.73)
+        .add_gear(1.95)
+        .add_gear(1.50)
+        .add_gear(1.22)
+        .add_gear(1.04)
+        .add_gear(0.89);
+}
+
+public node main {
+    set_engine(sls_amg_gt3_m159())
+    set_vehicle(sls_amg_gt3_vehicle())
+    set_transmission(sls_amg_gt3_transmission())
+}
+
+main()

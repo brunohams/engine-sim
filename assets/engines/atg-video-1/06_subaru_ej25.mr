@@ -352,7 +352,11 @@ private node impreza_transmission {
 }
 
 public node main {
-    set_engine(subaru_ej25())
-    set_vehicle(impreza())
-    set_transmission(impreza_transmission())
+    run(
+        engine: subaru_ej25(),
+        transmission: impreza_transmission(),
+        vehicle: impreza()
+    )
 }
+
+main()

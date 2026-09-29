@@ -100,6 +100,11 @@ public node units {
     output mph: mile / hour;
 }
 
+public node celcius {
+    input __in: 0.0;
+    alias output __out: __in + 273.15;
+}
+
 public node unit_names {
     // Pressure
     output inHg: "inHg";

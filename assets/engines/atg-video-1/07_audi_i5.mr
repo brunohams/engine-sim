@@ -366,7 +366,11 @@ private node audi_transmission {
 }
 
 public node main {
-    set_engine(audi_i5_2_2L())
-    set_vehicle(audi_vehicle())
-    set_transmission(audi_transmission())
+    run(
+        engine: audi_i5_2_2L(),
+        transmission: audi_transmission(),
+        vehicle: audi_vehicle()
+    )
 }
+
+main()

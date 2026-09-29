@@ -57,6 +57,8 @@ public node chevy_bbc_peanut_port_head {
         chamber_volume: 118.0 * units.cc,
         intake_runner_volume: 189.0 * units.cc,
         intake_runner_cross_section_area: 37.8 * units.cm2,
+        exhaust_runner_volume: 100.0 * units.cc,
+        exhaust_runner_cross_section_area: 9.0 * units.cm2,
 
         intake_port_flow: intake_flow,
         exhaust_port_flow: exhaust_flow,

@@ -445,7 +445,11 @@ private node mustang_transmission {
 }
 
 public node main {
-    set_engine(f136_v8())
-    set_vehicle(mustang_vehicle())
-    set_transmission(mustang_transmission())
+    run(
+        engine: f136_v8(),
+        vehicle: mustang_vehicle(),
+        transmission: mustang_transmission()
+    )
 }
+
+main()

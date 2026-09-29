@@ -396,7 +396,11 @@ private node supra_transmission {
 }
 
 public node main {
-    set_engine(t2jz())
-    set_vehicle(supra_vehicle())
-    set_transmission(supra_transmission())
+    run(
+        engine: t2jz(),
+        transmission: supra_transmission(),
+        vehicle: supra_vehicle()
+    )
 }
+
+main()

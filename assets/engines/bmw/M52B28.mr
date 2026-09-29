@@ -342,3 +342,11 @@ public node M52B28 {
             rev_limit: 8000 * units.rpm
         ))
 }
+
+public node main {
+    set_engine(M52B28())
+    set_vehicle(vehicle())
+    set_transmission(default_transmission())
+}
+
+main()

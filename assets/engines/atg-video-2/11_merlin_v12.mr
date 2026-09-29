@@ -475,7 +475,11 @@ private node random_transmission {
 }
 
 public node main {
-    set_engine(merlin_v12())
-    set_vehicle(random_car())
-    set_transmission(random_transmission())
+    run(
+        engine: merlin_v12(),
+        vehicle: random_car(),
+        transmission: random_transmission()
+    )
 }
+
+main()

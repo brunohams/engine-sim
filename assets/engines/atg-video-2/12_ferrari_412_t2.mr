@@ -501,7 +501,11 @@ private node f1_transmission {
 }
 
 public node main {
-    set_engine(ferrari_412_t2_v12())
-    set_vehicle(f1_vehicle())
-    set_transmission(f1_transmission())
+    run(
+        engine: ferrari_412_t2_v12(),
+        vehicle: f1_vehicle(),
+        transmission: f1_transmission()
+    )
 }
+
+main()

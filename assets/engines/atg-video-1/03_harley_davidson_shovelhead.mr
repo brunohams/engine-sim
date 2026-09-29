@@ -225,7 +225,11 @@ private node harley_davidson_transmission {
 }
 
 public node main {
-    set_engine(harley_davidson_shovelhead())
-    set_vehicle(harley_davidson_motorcyle())
-    set_transmission(harley_davidson_transmission())
+    run(
+        engine: harley_davidson_shovelhead(),
+        transmission: harley_davidson_transmission(),
+        vehicle: harley_davidson_motorcyle()
+    )
 }
+
+main()

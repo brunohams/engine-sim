@@ -224,7 +224,7 @@ public node lr_gue_v10 {
         runner_flow_rate: k_carb(200.0),
         runner_length: 4.0 * units.inch,
         idle_flow_rate: k_carb(0.0),
-        idle_throttle_plate_position: 0.998,
+        idle_throttle_plate_position: 0.997,
         velocity_decay: 0.5
     )
 
@@ -395,7 +395,7 @@ public node lr_gue_v10 {
 
         intake_lobe_profile: intake_lobe,
         exhaust_lobe_profile: exhaust_lobe,
-        intake_lobe_center: 90 * units.deg,
+        intake_lobe_center: 110 * units.deg,
         exhaust_lobe_center: 112 * units.deg,
         base_radius: 0.9 * units.inch
     )
@@ -454,7 +454,11 @@ private node lfa_transmission {
 }
 
 public node main {
-    set_engine(lr_gue_v10())
-    set_vehicle(lfa_vehicle())
-    set_transmission(lfa_transmission())
+    run(
+        engine: lr_gue_v10(),
+        vehicle: lfa_vehicle(),
+        transmission: lfa_transmission()
+    )
 }
+
+main()

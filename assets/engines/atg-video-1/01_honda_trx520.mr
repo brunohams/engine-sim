@@ -168,7 +168,11 @@ private node honda_trx520_vehicle {
 }
 
 public node main {
-    set_engine(honda_trx520())
-    set_transmission(honda_trx520_transmission())
-    set_vehicle(honda_trx520_vehicle())
+    run(
+        engine: honda_trx520(),
+        transmission: honda_trx520_transmission(),
+        vehicle: honda_trx520_vehicle()
+    )
 }
+
+main()

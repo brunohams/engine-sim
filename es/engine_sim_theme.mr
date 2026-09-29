@@ -1,0 +1,17 @@
+module {
+    @name:      "Engine Simulator Settings Library"
+    @author:    "ATG (Ange Yaghi)"
+    @copyright: "Copyright 2022, Ange Yaghi"
+}
+
+// Types
+public import "types/atomic_types.mr"
+public import "types/conversions.mr"
+public import "types/operations.mr"
+
+// Constants
+public import "constants/constants.mr"
+public import "constants/units.mr"
+
+// Application settings
+public import "settings/application_settings.mr"

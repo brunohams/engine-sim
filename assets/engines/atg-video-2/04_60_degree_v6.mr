@@ -388,7 +388,11 @@ private node random_transmission {
 }
 
 public node main {
-    set_engine(v6_60())
-    set_vehicle(random_car())
-    set_transmission(random_transmission())
+    run(
+        engine: v6_60(),
+        transmission: random_transmission(),
+        vehicle: random_car()
+    )
 }
+
+main()

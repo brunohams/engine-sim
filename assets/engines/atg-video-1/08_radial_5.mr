@@ -295,7 +295,11 @@ private node direct_drive {
 }
 
 public node main {
-    set_engine(radial_5())
-    set_vehicle(propellor())
-    set_transmission(direct_drive())
+    run(
+        engine: radial_5(),
+        transmission: direct_drive(),
+        vehicle: propellor()
+    )
 }
+
+main()

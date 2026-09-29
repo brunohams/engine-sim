@@ -188,7 +188,11 @@ private node static_load {
 }
 
 public node main {
-    set_engine(kohler_ch750())
-    set_transmission(direct_drive())
-    set_vehicle(static_load())
+    run(
+        engine: kohler_ch750(),
+        transmission: direct_drive(),
+        vehicle: static_load()
+    )
 }
+
+main()

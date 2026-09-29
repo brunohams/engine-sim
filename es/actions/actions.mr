@@ -14,8 +14,18 @@ private import "../objects/objects.mr"
 constants constants()
 units units()
 
-public node set_engine => __engine_sim__set_engine {
-    input engine [engine];
+private node _set_engine => __engine_sim__set_engine {
+    input engine [engine_channel];
+
+    // These are internal parameters that should not be used
+    // and are here for backwards compatibility
+    input __vehicle__do_not_use [vehicle_channel]: vehicle();
+    input __transmission__do_not_use [transmission_channel]: default_transmission();
+}
+
+public node set_engine {
+    input engine;
+    _set_engine(engine: engine)
 }
 
 private node _add_rod_journal => __engine_sim__add_rod_journal {
@@ -46,7 +56,7 @@ public node add_slave_journal {
 
 public node _add_crankshaft => __engine_sim__add_crankshaft {
     input crankshaft [crankshaft];
-    input engine [engine];
+    input engine [engine_channel];
 }
 
 public node add_crankshaft {
@@ -107,6 +117,55 @@ public node add_cylinder {
     )
 }
 
+private node _add_rotor => __engine_sim__add_rotor {
+    input rotor [wankel_rotor];
+    input rod_journal [rod_journal];
+    input exhaust_system [exhaust_system];
+    input intake [intake];
+    input ignition_wire [ignition_wire];
+    input sound_attenuation [float];
+    input primary_length [float];
+    input engine [wankel_engine];
+    input intake_port [wankel_peripheral_port];
+    input exhaust_port [wankel_peripheral_port];
+    input intake_runner_cross_section_area [float];
+    input exhaust_cross_section_area [float];
+    input spark_plug_angle [float];
+}
+
+public node add_rotor {
+    input intake;
+    input exhaust_system;
+    input rotor;
+    input rod_journal;
+    input ignition_wire;
+    input sound_attenuation: 1.0;
+    input primary_length: 0.0;
+    input intake_port;
+    input exhaust_port;
+    input intake_runner_cross_section_area;
+    input exhaust_cross_section_area;
+    input spark_plug_angle;
+    input this;
+    alias output __out: this;
+
+    _add_rotor(
+        rotor: rotor,
+        rod_journal: rod_journal,
+        exhaust_system: exhaust_system,
+        intake: intake,
+        ignition_wire: ignition_wire,
+        engine: this,
+        sound_attenuation: sound_attenuation,
+        primary_length: primary_length,
+        intake_port: intake_port,
+        exhaust_port: exhaust_port,
+        intake_runner_cross_section_area: intake_runner_cross_section_area,
+        exhaust_cross_section_area: exhaust_cross_section_area,
+        spark_plug_angle: spark_plug_angle
+    )
+}
+
 private node _add_sample => __engine_sim__add_sample {
     input x [float];
     input y [float];
@@ -152,6 +211,11 @@ public node k_28inH2O => __engine_sim__k_28inH2O {
     alias output __out [float];
 }
 
+public node k_32inH2O => __engine_sim__k_32inH2O {
+    input flow [float]: 1.0;
+    alias output __out [float];
+}
+
 public node k_carb => __engine_sim__k_carb {
     input flow [float]: 1.0;
     alias output __out [float];
@@ -180,7 +244,7 @@ public node connect_wire {
 
 private node _add_ignition_module => __engine_sim__add_ignition_module {
     input ignition_module [ignition_module];
-    input engine [engine];
+    input engine [engine_channel];
 }
 
 public node add_ignition_module {
@@ -235,4 +299,14 @@ public node add_gear {
 
 public node set_transmission => __engine_sim__set_transmission {
     input transmission [transmission];
+}
+
+public node run {
+    input engine;
+    input transmission: transmission();
+    input vehicle: vehicle();
+
+    set_engine(engine)
+    set_transmission(transmission)
+    set_vehicle(vehicle)
 }

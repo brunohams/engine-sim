@@ -1,14 +1,17 @@
-private import "engine_sim.mr"
+private import "../types/atomic_types.mr"
+private import "../types/conversions.mr"
+private import "../types/operations.mr"
+private import "../constants/units.mr"
 
-units units()
+unit_names units()
 
 public node set_application_settings => __engine_sim__set_application_settings {
     input start_fullscreen [bool]: false;
-	input power_units [string]: "HP";
-	input torque_units [string]: "FTLBS";
-	input speed_units [string]: "MPH";
-	input pressure_units [string]: "INHG";
-	input boost_units [string]: "PSI";
+	input power_units [string]: units.hp;
+	input torque_units [string]: units.lb_ft;
+	input speed_units [string]: units.mph;
+	input pressure_units [string]: units.inHg;
+	input boost_units [string]: units.psi;
 	input color_background [int]: 0x0E1012;
     input color_foreground [int]: 0xFFFFFF;
     input color_shadow [int]: 0x0E1012;
@@ -20,5 +23,4 @@ public node set_application_settings => __engine_sim__set_application_settings {
     input color_yellow [int]: 0xFDBD2E;
     input color_blue [int]: 0x77CEE0;
     input color_green [int]: 0xBDD869;
-
 }

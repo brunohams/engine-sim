@@ -173,7 +173,7 @@ public node hayabusa_i4 {
         runner_flow_rate: k_carb(300.0),
         runner_length: 10.0 * units.inch,
         idle_flow_rate: k_carb(0.0),
-        idle_throttle_plate_position: 0.999,
+        idle_throttle_plate_position: 0.9985,
         velocity_decay: 0.5
     )
 
@@ -325,7 +325,11 @@ private node hayabusa {
 }
 
 public node main {
-    set_engine(hayabusa_i4())
-    set_transmission(hayabusa_transmission())
-    set_vehicle(hayabusa())
+    run(
+        engine: hayabusa_i4(),
+        transmission: hayabusa_transmission(),
+        vehicle: hayabusa()
+    )
 }
+
+main()

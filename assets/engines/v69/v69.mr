@@ -1,0 +1,1411 @@
+import "engine_sim.mr"
+
+units units()
+constants constants()
+impulse_response_library ir_lib()
+            
+private node wires {
+    output wire0: ignition_wire();
+    output wire1: ignition_wire();
+    output wire2: ignition_wire();
+    output wire3: ignition_wire();
+    output wire4: ignition_wire();
+    output wire5: ignition_wire();
+    output wire6: ignition_wire();
+    output wire7: ignition_wire();
+    output wire8: ignition_wire();
+    output wire9: ignition_wire();
+    output wire10: ignition_wire();
+    output wire11: ignition_wire();
+    output wire12: ignition_wire();
+    output wire13: ignition_wire();
+    output wire14: ignition_wire();
+    output wire15: ignition_wire();
+    output wire16: ignition_wire();
+    output wire17: ignition_wire();
+    output wire18: ignition_wire();
+    output wire19: ignition_wire();
+    output wire20: ignition_wire();
+    output wire21: ignition_wire();
+    output wire22: ignition_wire();
+    output wire23: ignition_wire();
+    output wire24: ignition_wire();
+    output wire25: ignition_wire();
+    output wire26: ignition_wire();
+    output wire27: ignition_wire();
+    output wire28: ignition_wire();
+    output wire29: ignition_wire();
+    output wire30: ignition_wire();
+    output wire31: ignition_wire();
+    output wire32: ignition_wire();
+    output wire33: ignition_wire();
+    output wire34: ignition_wire();
+    output wire35: ignition_wire();
+    output wire36: ignition_wire();
+    output wire37: ignition_wire();
+    output wire38: ignition_wire();
+    output wire39: ignition_wire();
+    output wire40: ignition_wire();
+    output wire41: ignition_wire();
+    output wire42: ignition_wire();
+    output wire43: ignition_wire();
+    output wire44: ignition_wire();
+    output wire45: ignition_wire();
+    output wire46: ignition_wire();
+    output wire47: ignition_wire();
+    output wire48: ignition_wire();
+    output wire49: ignition_wire();
+    output wire50: ignition_wire();
+    output wire51: ignition_wire();
+    output wire52: ignition_wire();
+    output wire53: ignition_wire();
+    output wire54: ignition_wire();
+    output wire55: ignition_wire();
+    output wire56: ignition_wire();
+    output wire57: ignition_wire();
+    output wire58: ignition_wire();
+    output wire59: ignition_wire();
+    output wire60: ignition_wire();
+    output wire61: ignition_wire();
+    output wire62: ignition_wire();
+    output wire63: ignition_wire();
+    output wire64: ignition_wire();
+    output wire65: ignition_wire();
+    output wire66: ignition_wire();
+    output wire67: ignition_wire();
+    output wire68: ignition_wire();
+}
+private node generated_head {
+    input intake_camshaft;
+    input exhaust_camshaft;
+    input chamber_volume: 3000 * units.cc;
+    input intake_runner_volume: 149.6 * units.cc;
+    input intake_runner_cross_section_area: 1.75 * units.inch * 1.75 * units.inch;
+    input exhaust_runner_volume: 50.0 * units.cc;
+    input exhaust_runner_cross_section_area: 1.75 * units.inch * 1.75 * units.inch;
+
+    input flow_attenuation: 1.0;
+    input lift_scale: 1.0;
+    input flip_display: false;
+    alias output __out: head;
+
+    function intake_flow(50 * units.thou)
+    intake_flow
+        .add_flow_sample(0 * lift_scale, 0 * flow_attenuation)
+        .add_flow_sample(50 * lift_scale, 58 * flow_attenuation)
+        .add_flow_sample(100 * lift_scale, 103 * flow_attenuation)
+        .add_flow_sample(150 * lift_scale, 156 * flow_attenuation)
+        .add_flow_sample(200 * lift_scale, 214 * flow_attenuation)
+        .add_flow_sample(250 * lift_scale, 249 * flow_attenuation)
+        .add_flow_sample(300 * lift_scale, 268 * flow_attenuation)
+        .add_flow_sample(350 * lift_scale, 280 * flow_attenuation)
+        .add_flow_sample(400 * lift_scale, 280 * flow_attenuation)
+        .add_flow_sample(450 * lift_scale, 281 * flow_attenuation)
+
+    function exhaust_flow(50 * units.thou)
+    exhaust_flow
+        .add_flow_sample(0 * lift_scale, 0 * flow_attenuation)
+        .add_flow_sample(50 * lift_scale, 37 * flow_attenuation)
+        .add_flow_sample(100 * lift_scale, 72 * flow_attenuation)
+        .add_flow_sample(150 * lift_scale, 113 * flow_attenuation)
+        .add_flow_sample(200 * lift_scale, 160 * flow_attenuation)
+        .add_flow_sample(250 * lift_scale, 196 * flow_attenuation)
+        .add_flow_sample(300 * lift_scale, 222 * flow_attenuation)
+        .add_flow_sample(350 * lift_scale, 235 * flow_attenuation)
+        .add_flow_sample(400 * lift_scale, 245 * flow_attenuation)
+        .add_flow_sample(450 * lift_scale, 246 * flow_attenuation)
+
+    generic_cylinder_head head(
+        chamber_volume: chamber_volume,
+        intake_runner_volume: intake_runner_volume,
+        intake_runner_cross_section_area: intake_runner_cross_section_area,
+        exhaust_runner_volume: exhaust_runner_volume,
+        exhaust_runner_cross_section_area: exhaust_runner_cross_section_area,
+
+        intake_port_flow: intake_flow,
+        exhaust_port_flow: exhaust_flow,
+        valvetrain: standard_valvetrain(
+            intake_camshaft: intake_camshaft,
+            exhaust_camshaft: exhaust_camshaft
+        ),
+        flip_display: flip_display
+    )
+}
+private node generated_camshaft {
+    input lobe_profile;
+    input intake_lobe_profile: lobe_profile;
+    input exhaust_lobe_profile: lobe_profile;
+    input lobe_separation: 114 * units.deg;
+    input intake_lobe_center: lobe_separation;
+    input exhaust_lobe_center: lobe_separation;  
+    input advance: 0 * units.deg; 
+    input base_radius: 0.5 * units.inch;
+    output intake_cam_0: _intake_cam_0;
+    output exhaust_cam_0: _exhaust_cam_0;
+
+    output intake_cam_1: _intake_cam_1;
+    output exhaust_cam_1: _exhaust_cam_1;
+    camshaft_parameters params (
+        advance: advance,
+        base_radius: base_radius
+    )
+
+    camshaft _intake_cam_0(params, lobe_profile: intake_lobe_profile)
+    camshaft _exhaust_cam_0(params, lobe_profile: exhaust_lobe_profile)
+
+    camshaft _intake_cam_1(params, lobe_profile: intake_lobe_profile)
+    camshaft _exhaust_cam_1(params, lobe_profile: exhaust_lobe_profile)
+    label rot360(360 * units.deg)
+    _exhaust_cam_0
+        .add_lobe(rot360 - exhaust_lobe_center + 0.0 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 20.869565217391305 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 41.73913043478261 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 62.608695652173914 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 83.47826086956522 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 104.34782608695653 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 125.21739130434783 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 146.08695652173913 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 166.95652173913044 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 187.82608695652175 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 208.69565217391306 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 229.56521739130434 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 250.43478260869566 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 271.30434782608694 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 292.17391304347825 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 313.04347826086956 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 333.9130434782609 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 354.7826086956522 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 375.6521739130435 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 396.5217391304348 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 417.3913043478261 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 438.2608695652174 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 459.1304347826087 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 480.0 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 500.8695652173913 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 521.7391304347826 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 542.6086956521739 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 563.4782608695652 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 584.3478260869565 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 605.2173913043479 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 626.0869565217391 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 646.9565217391305 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 667.8260869565217 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 688.695652173913 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 709.5652173913044 * units.deg)
+    _intake_cam_0
+        .add_lobe(rot360 + exhaust_lobe_center + 0.0 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 20.869565217391305 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 41.73913043478261 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 62.608695652173914 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 83.47826086956522 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 104.34782608695653 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 125.21739130434783 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 146.08695652173913 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 166.95652173913044 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 187.82608695652175 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 208.69565217391306 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 229.56521739130434 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 250.43478260869566 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 271.30434782608694 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 292.17391304347825 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 313.04347826086956 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 333.9130434782609 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 354.7826086956522 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 375.6521739130435 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 396.5217391304348 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 417.3913043478261 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 438.2608695652174 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 459.1304347826087 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 480.0 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 500.8695652173913 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 521.7391304347826 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 542.6086956521739 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 563.4782608695652 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 584.3478260869565 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 605.2173913043479 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 626.0869565217391 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 646.9565217391305 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 667.8260869565217 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 688.695652173913 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 709.5652173913044 * units.deg)
+    _exhaust_cam_1
+        .add_lobe(rot360 - exhaust_lobe_center + 10.434782608695652 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 31.304347826086957 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 52.173913043478265 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 73.04347826086956 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 93.91304347826087 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 114.78260869565217 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 135.65217391304347 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 156.52173913043478 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 177.3913043478261 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 198.2608695652174 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 219.1304347826087 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 240.0 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 260.8695652173913 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 281.7391304347826 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 302.60869565217394 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 323.47826086956525 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 344.3478260869565 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 365.2173913043478 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 386.0869565217391 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 406.95652173913044 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 427.82608695652175 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 448.69565217391306 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 469.5652173913044 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 490.4347826086957 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 511.30434782608694 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 532.1739130434783 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 553.0434782608696 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 573.9130434782609 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 594.7826086956521 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 615.6521739130435 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 636.5217391304348 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 657.3913043478261 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 678.2608695652174 * units.deg)
+        .add_lobe(rot360 - exhaust_lobe_center + 699.1304347826087 * units.deg)
+    _intake_cam_1
+        .add_lobe(rot360 + exhaust_lobe_center + 10.434782608695652 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 31.304347826086957 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 52.173913043478265 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 73.04347826086956 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 93.91304347826087 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 114.78260869565217 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 135.65217391304347 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 156.52173913043478 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 177.3913043478261 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 198.2608695652174 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 219.1304347826087 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 240.0 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 260.8695652173913 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 281.7391304347826 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 302.60869565217394 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 323.47826086956525 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 344.3478260869565 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 365.2173913043478 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 386.0869565217391 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 406.95652173913044 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 427.82608695652175 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 448.69565217391306 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 469.5652173913044 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 490.4347826086957 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 511.30434782608694 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 532.1739130434783 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 553.0434782608696 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 573.9130434782609 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 594.7826086956521 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 615.6521739130435 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 636.5217391304348 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 657.3913043478261 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 678.2608695652174 * units.deg)
+        .add_lobe(rot360 + exhaust_lobe_center + 699.1304347826087 * units.deg)
+}
+
+public node generated_engine {
+    alias output __out: engine;
+
+    engine engine(
+        name: "V69",
+        starter_torque: 10000 * units.lb_ft,
+        starter_speed: 500 * units.rpm,
+        redline: 18000 * units.rpm,
+        throttle_gamma: 2.0,
+        fuel: fuel(
+            max_turbulence_effect: 10.0,
+            max_dilution_effect: 5.0,
+            burning_efficiency_randomness: 0.1,
+            max_burning_efficiency: 1.0
+        ),
+        hf_gain: 0.01,
+        noise: 1.0,
+        jitter: 0.1,
+        simulation_frequency: 1200,
+        max_sle_solver_steps: 4,
+        fluid_simulation_steps: 6
+    )
+
+    wires wires()
+
+    label stroke(197.9 * units.mm)
+    label bore(197.9 * units.mm)
+    label rod_length(346.325 * units.mm)
+    label rod_mass(50 * units.g)
+    label compression_height(25.4 * units.mm)
+    label crank_mass(2000 * units.kg)
+    label flywheel_mass(10 * units.kg)
+    label flywheel_radius(100 * units.mm)
+
+    label crank_moment(
+        disk_moment_of_inertia(mass: crank_mass, radius: stroke)
+    )
+    label flywheel_moment(
+        disk_moment_of_inertia(mass: flywheel_mass, radius: flywheel_radius)
+    )
+    label other_moment( // Moment from cams, pulleys, etc [estimated]
+        disk_moment_of_inertia(mass: 1 * units.kg, radius: 1.0 * units.cm)
+    )
+
+    crankshaft c0(
+        throw: stroke / 2,
+        flywheel_mass: flywheel_mass,
+        mass: crank_mass,
+        friction_torque: 1.0 * units.lb_ft,
+        moment_of_inertia:
+            crank_moment + flywheel_moment + other_moment,
+        position_x: 0.0,
+        position_y: 0.0,
+        tdc: 55.5 * units.deg
+    )
+
+    rod_journal rj0(angle: 0.0 * units.deg)
+    rod_journal rj1(angle: 79.43478260869566 * units.deg)
+    rod_journal rj2(angle: 20.86956521739131 * units.deg)
+    rod_journal rj3(angle: 100.30434782608697 * units.deg)
+    rod_journal rj4(angle: 41.73913043478261 * units.deg)
+    rod_journal rj5(angle: 121.17391304347825 * units.deg)
+    rod_journal rj6(angle: 62.60869565217392 * units.deg)
+    rod_journal rj7(angle: 142.04347826086956 * units.deg)
+    rod_journal rj8(angle: 83.47826086956525 * units.deg)
+    rod_journal rj9(angle: 162.91304347826087 * units.deg)
+    rod_journal rj10(angle: 104.34782608695656 * units.deg)
+    rod_journal rj11(angle: 183.7826086956522 * units.deg)
+    rod_journal rj12(angle: 125.21739130434787 * units.deg)
+    rod_journal rj13(angle: 204.6521739130435 * units.deg)
+    rod_journal rj14(angle: 146.08695652173915 * units.deg)
+    rod_journal rj15(angle: 225.5217391304348 * units.deg)
+    rod_journal rj16(angle: 166.95652173913047 * units.deg)
+    rod_journal rj17(angle: 246.39130434782612 * units.deg)
+    rod_journal rj18(angle: 187.82608695652178 * units.deg)
+    rod_journal rj19(angle: 267.26086956521743 * units.deg)
+    rod_journal rj20(angle: 208.69565217391312 * units.deg)
+    rod_journal rj21(angle: 288.13043478260875 * units.deg)
+    rod_journal rj22(angle: 229.56521739130437 * units.deg)
+    rod_journal rj23(angle: 309.00000000000006 * units.deg)
+    rod_journal rj24(angle: 250.43478260869574 * units.deg)
+    rod_journal rj25(angle: 329.86956521739137 * units.deg)
+    rod_journal rj26(angle: 271.304347826087 * units.deg)
+    rod_journal rj27(angle: 350.7391304347826 * units.deg)
+    rod_journal rj28(angle: 292.17391304347825 * units.deg)
+    rod_journal rj29(angle: 371.6086956521739 * units.deg)
+    rod_journal rj30(angle: 313.0434782608695 * units.deg)
+    rod_journal rj31(angle: 392.47826086956513 * units.deg)
+    rod_journal rj32(angle: 333.91304347826076 * units.deg)
+    rod_journal rj33(angle: 413.3478260869564 * units.deg)
+    rod_journal rj34(angle: 354.782608695652 * units.deg)
+    rod_journal rj35(angle: 434.21739130434764 * units.deg)
+    rod_journal rj36(angle: 375.65217391304327 * units.deg)
+    rod_journal rj37(angle: 455.0869565217389 * units.deg)
+    rod_journal rj38(angle: 396.5217391304345 * units.deg)
+    rod_journal rj39(angle: 475.95652173913015 * units.deg)
+    rod_journal rj40(angle: 417.3913043478258 * units.deg)
+    rod_journal rj41(angle: 496.8260869565214 * units.deg)
+    rod_journal rj42(angle: 438.26086956521704 * units.deg)
+    rod_journal rj43(angle: 517.6956521739127 * units.deg)
+    rod_journal rj44(angle: 459.1304347826083 * units.deg)
+    rod_journal rj45(angle: 538.5652173913039 * units.deg)
+    rod_journal rj46(angle: 479.99999999999955 * units.deg)
+    rod_journal rj47(angle: 559.4347826086952 * units.deg)
+    rod_journal rj48(angle: 500.8695652173908 * units.deg)
+    rod_journal rj49(angle: 580.3043478260864 * units.deg)
+    rod_journal rj50(angle: 521.739130434782 * units.deg)
+    rod_journal rj51(angle: 601.1739130434777 * units.deg)
+    rod_journal rj52(angle: 542.6086956521733 * units.deg)
+    rod_journal rj53(angle: 622.0434782608689 * units.deg)
+    rod_journal rj54(angle: 563.4782608695646 * units.deg)
+    rod_journal rj55(angle: 642.9130434782602 * units.deg)
+    rod_journal rj56(angle: 584.3478260869558 * units.deg)
+    rod_journal rj57(angle: 663.7826086956514 * units.deg)
+    rod_journal rj58(angle: 605.2173913043471 * units.deg)
+    rod_journal rj59(angle: 684.6521739130427 * units.deg)
+    rod_journal rj60(angle: 626.0869565217383 * units.deg)
+    rod_journal rj61(angle: 705.521739130434 * units.deg)
+    rod_journal rj62(angle: 646.9565217391296 * units.deg)
+    rod_journal rj63(angle: 726.3913043478252 * units.deg)
+    rod_journal rj64(angle: 667.8260869565208 * units.deg)
+    rod_journal rj65(angle: 747.2608695652165 * units.deg)
+    rod_journal rj66(angle: 688.6956521739121 * units.deg)
+    rod_journal rj67(angle: 768.1304347826077 * units.deg)
+    rod_journal rj68(angle: 709.5652173913033 * units.deg)
+    c0
+        .add_rod_journal(rj0)
+        .add_rod_journal(rj1)
+        .add_rod_journal(rj2)
+        .add_rod_journal(rj3)
+        .add_rod_journal(rj4)
+        .add_rod_journal(rj5)
+        .add_rod_journal(rj6)
+        .add_rod_journal(rj7)
+        .add_rod_journal(rj8)
+        .add_rod_journal(rj9)
+        .add_rod_journal(rj10)
+        .add_rod_journal(rj11)
+        .add_rod_journal(rj12)
+        .add_rod_journal(rj13)
+        .add_rod_journal(rj14)
+        .add_rod_journal(rj15)
+        .add_rod_journal(rj16)
+        .add_rod_journal(rj17)
+        .add_rod_journal(rj18)
+        .add_rod_journal(rj19)
+        .add_rod_journal(rj20)
+        .add_rod_journal(rj21)
+        .add_rod_journal(rj22)
+        .add_rod_journal(rj23)
+        .add_rod_journal(rj24)
+        .add_rod_journal(rj25)
+        .add_rod_journal(rj26)
+        .add_rod_journal(rj27)
+        .add_rod_journal(rj28)
+        .add_rod_journal(rj29)
+        .add_rod_journal(rj30)
+        .add_rod_journal(rj31)
+        .add_rod_journal(rj32)
+        .add_rod_journal(rj33)
+        .add_rod_journal(rj34)
+        .add_rod_journal(rj35)
+        .add_rod_journal(rj36)
+        .add_rod_journal(rj37)
+        .add_rod_journal(rj38)
+        .add_rod_journal(rj39)
+        .add_rod_journal(rj40)
+        .add_rod_journal(rj41)
+        .add_rod_journal(rj42)
+        .add_rod_journal(rj43)
+        .add_rod_journal(rj44)
+        .add_rod_journal(rj45)
+        .add_rod_journal(rj46)
+        .add_rod_journal(rj47)
+        .add_rod_journal(rj48)
+        .add_rod_journal(rj49)
+        .add_rod_journal(rj50)
+        .add_rod_journal(rj51)
+        .add_rod_journal(rj52)
+        .add_rod_journal(rj53)
+        .add_rod_journal(rj54)
+        .add_rod_journal(rj55)
+        .add_rod_journal(rj56)
+        .add_rod_journal(rj57)
+        .add_rod_journal(rj58)
+        .add_rod_journal(rj59)
+        .add_rod_journal(rj60)
+        .add_rod_journal(rj61)
+        .add_rod_journal(rj62)
+        .add_rod_journal(rj63)
+        .add_rod_journal(rj64)
+        .add_rod_journal(rj65)
+        .add_rod_journal(rj66)
+        .add_rod_journal(rj67)
+        .add_rod_journal(rj68)
+
+    piston_parameters piston_params(
+        mass: (50) * units.g, // 414 - piston mass, 152 - pin weight
+        compression_height: compression_height,
+        wrist_pin_position: 0.0,
+        displacement: 0.0
+    )
+
+    connecting_rod_parameters cr_params(
+        mass: rod_mass,
+        moment_of_inertia: rod_moment_of_inertia(
+            mass: rod_mass,
+            length: rod_length
+        ),
+        center_of_mass: 0.0,
+        length: rod_length
+    )
+    intake intake(
+        plenum_volume: 1.325 * units.L,
+        plenum_cross_section_area: 20.0 * units.cm2,
+        intake_flow_rate: k_carb(3000.0),
+        runner_flow_rate: k_carb(400.0),
+        runner_length: 16.0 * units.inch,
+        idle_flow_rate: k_carb(0.0),
+        idle_throttle_plate_position: 0.9,
+        velocity_decay: 0.5
+    )
+    exhaust_system_parameters es_params(
+        outlet_flow_rate: k_carb(2000.0),
+        primary_tube_length: 20.0 * units.inch,
+        primary_flow_rate: k_carb(400.0),
+        velocity_decay: 0.5
+    )
+    exhaust_system exhaust0(
+        es_params,
+        audio_volume: 1.0 * 0.004,
+        length: 20 * units.inch,
+        impulse_response: ir_lib.minimal_muffling_01
+    )
+
+    exhaust_system exhaust1(
+        es_params,
+        audio_volume: 1.0 * 0.002,
+        length: 20 * units.inch,
+        impulse_response: ir_lib.minimal_muffling_01
+    )
+
+    cylinder_bank_parameters bank_params(
+        bore: bore,
+        deck_height: stroke / 2 + rod_length + compression_height
+    )
+
+    label spacing(0.0)
+    cylinder_bank b0(bank_params, angle: -34.5 * units.deg)
+    cylinder_bank b1(bank_params, angle: 34.5 * units.deg)
+    b0
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj0,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire0,
+            sound_attenuation: 0.9431415341032672,
+            primary_length: 0 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj2,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire2,
+            sound_attenuation: 0.5111266598262583,
+            primary_length: 1 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj4,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire4,
+            sound_attenuation: 0.9128751829738175,
+            primary_length: 2 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj6,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire6,
+            sound_attenuation: 0.996151658017994,
+            primary_length: 3 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj8,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire8,
+            sound_attenuation: 0.6473592848102487,
+            primary_length: 4 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj10,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire10,
+            sound_attenuation: 0.5575761287358816,
+            primary_length: 5 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj12,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire12,
+            sound_attenuation: 0.6249029531477415,
+            primary_length: 6 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj14,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire14,
+            sound_attenuation: 0.6469408950262518,
+            primary_length: 7 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj16,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire16,
+            sound_attenuation: 0.7167636411460412,
+            primary_length: 8 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj18,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire18,
+            sound_attenuation: 0.5229218005278262,
+            primary_length: 9 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj20,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire20,
+            sound_attenuation: 0.8854736827017472,
+            primary_length: 10 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj22,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire22,
+            sound_attenuation: 0.8332382860688656,
+            primary_length: 11 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj24,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire24,
+            sound_attenuation: 0.7219678048449075,
+            primary_length: 12 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj26,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire26,
+            sound_attenuation: 0.9864008918475248,
+            primary_length: 13 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj28,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire28,
+            sound_attenuation: 0.7927928659822332,
+            primary_length: 14 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj30,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire30,
+            sound_attenuation: 0.9570691101429036,
+            primary_length: 15 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj32,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire32,
+            sound_attenuation: 0.6297934075827343,
+            primary_length: 16 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj34,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire34,
+            sound_attenuation: 0.695742021204055,
+            primary_length: 17 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj36,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire36,
+            sound_attenuation: 0.626299989758103,
+            primary_length: 18 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj38,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire38,
+            sound_attenuation: 0.7999998820236572,
+            primary_length: 19 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj40,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire40,
+            sound_attenuation: 0.698025773869901,
+            primary_length: 20 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj42,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire42,
+            sound_attenuation: 0.5655744094402902,
+            primary_length: 21 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj44,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire44,
+            sound_attenuation: 0.9894376560690556,
+            primary_length: 22 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj46,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire46,
+            sound_attenuation: 0.9183195341848865,
+            primary_length: 23 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj48,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire48,
+            sound_attenuation: 0.7004416979908905,
+            primary_length: 24 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj50,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire50,
+            sound_attenuation: 0.8506266484943569,
+            primary_length: 25 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj52,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire52,
+            sound_attenuation: 0.6751927462266045,
+            primary_length: 26 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj54,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire54,
+            sound_attenuation: 0.8240078189832589,
+            primary_length: 27 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj56,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire56,
+            sound_attenuation: 0.8989358478098557,
+            primary_length: 28 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj58,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire58,
+            sound_attenuation: 0.6325107452681336,
+            primary_length: 29 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj60,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire60,
+            sound_attenuation: 0.5739484934116954,
+            primary_length: 30 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj62,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire62,
+            sound_attenuation: 0.9737536555509891,
+            primary_length: 31 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj64,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire64,
+            sound_attenuation: 0.8832506457606077,
+            primary_length: 32 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj66,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire66,
+            sound_attenuation: 0.5518011827650996,
+            primary_length: 33 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj68,
+            intake: intake,
+            exhaust_system: exhaust0,
+            ignition_wire: wires.wire68,
+            sound_attenuation: 0.5224211012207678,
+            primary_length: 34 * spacing * 0.5 * units.cm
+        )
+        .set_cylinder_head(
+            generated_head(
+                intake_camshaft: camshaft.intake_cam_0,
+                exhaust_camshaft: camshaft.exhaust_cam_0,
+                flip_display: false,
+                flow_attenuation: 1.0)
+        )
+
+    b1
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj1,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire1,
+            sound_attenuation: 0.9105683534262548,
+            primary_length: 0 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj3,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire3,
+            sound_attenuation: 0.5198720361568362,
+            primary_length: 1 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj5,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire5,
+            sound_attenuation: 0.8841464348979422,
+            primary_length: 2 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj7,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire7,
+            sound_attenuation: 0.6751651047943256,
+            primary_length: 3 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj9,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire9,
+            sound_attenuation: 0.6007562894309855,
+            primary_length: 4 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj11,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire11,
+            sound_attenuation: 0.9098342158574894,
+            primary_length: 5 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj13,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire13,
+            sound_attenuation: 0.9276023841674477,
+            primary_length: 6 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj15,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire15,
+            sound_attenuation: 0.5613805800681689,
+            primary_length: 7 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj17,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire17,
+            sound_attenuation: 0.9675130329785316,
+            primary_length: 8 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj19,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire19,
+            sound_attenuation: 0.8183504719909502,
+            primary_length: 9 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj21,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire21,
+            sound_attenuation: 0.7348319906404401,
+            primary_length: 10 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj23,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire23,
+            sound_attenuation: 0.5575083502310156,
+            primary_length: 11 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj25,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire25,
+            sound_attenuation: 0.6619898524153773,
+            primary_length: 12 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj27,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire27,
+            sound_attenuation: 0.7115572751367851,
+            primary_length: 13 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj29,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire29,
+            sound_attenuation: 0.6978798302639531,
+            primary_length: 14 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj31,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire31,
+            sound_attenuation: 0.5933214135523133,
+            primary_length: 15 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj33,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire33,
+            sound_attenuation: 0.778917994332196,
+            primary_length: 16 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj35,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire35,
+            sound_attenuation: 0.9393673828069102,
+            primary_length: 17 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj37,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire37,
+            sound_attenuation: 0.5457733465347234,
+            primary_length: 18 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj39,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire39,
+            sound_attenuation: 0.5804862389092647,
+            primary_length: 19 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj41,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire41,
+            sound_attenuation: 0.5983969615362394,
+            primary_length: 20 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj43,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire43,
+            sound_attenuation: 0.6636041322273349,
+            primary_length: 21 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj45,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire45,
+            sound_attenuation: 0.5785054984693287,
+            primary_length: 22 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj47,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire47,
+            sound_attenuation: 0.5357140776299212,
+            primary_length: 23 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj49,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire49,
+            sound_attenuation: 0.62451669236683,
+            primary_length: 24 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj51,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire51,
+            sound_attenuation: 0.8188966856394502,
+            primary_length: 25 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj53,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire53,
+            sound_attenuation: 0.6897514569942979,
+            primary_length: 26 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj55,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire55,
+            sound_attenuation: 0.855401013603232,
+            primary_length: 27 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj57,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire57,
+            sound_attenuation: 0.8001118802441156,
+            primary_length: 28 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj59,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire59,
+            sound_attenuation: 0.6023342433081548,
+            primary_length: 29 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj61,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire61,
+            sound_attenuation: 0.9456472776589837,
+            primary_length: 30 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj63,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire63,
+            sound_attenuation: 0.7472879170926328,
+            primary_length: 31 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj65,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire65,
+            sound_attenuation: 0.9016773702949,
+            primary_length: 32 * spacing * 0.5 * units.cm
+        )
+        .add_cylinder(
+            piston: piston(piston_params, blowby: k_28inH2O(0.0)),
+            connecting_rod: connecting_rod(cr_params),
+            rod_journal: rj67,
+            intake: intake,
+            exhaust_system: exhaust1,
+            ignition_wire: wires.wire67,
+            sound_attenuation: 0.5364947802765536,
+            primary_length: 33 * spacing * 0.5 * units.cm
+        )
+        .set_cylinder_head(
+            generated_head(
+                intake_camshaft: camshaft.intake_cam_1,
+                exhaust_camshaft: camshaft.exhaust_cam_1,
+                flip_display: false,
+                flow_attenuation: 1.0)
+        )
+
+    engine
+        .add_cylinder_bank(b0)
+        .add_cylinder_bank(b1)
+
+    engine.add_crankshaft(c0)
+    harmonic_cam_lobe intake_lobe(
+        duration_at_50_thou: 234 * units.deg,
+        gamma: 1.1,
+        lift: 551 * units.thou,
+        steps: 512
+    )
+
+    harmonic_cam_lobe exhaust_lobe(
+        duration_at_50_thou: 235 * units.deg,
+        gamma: 1.1,
+        lift: 551 * units.thou,
+        steps: 512
+    )
+
+    generated_camshaft camshaft(
+        lobe_profile: "N/A",
+
+        intake_lobe_profile: intake_lobe,
+        exhaust_lobe_profile: exhaust_lobe,
+        intake_lobe_center: 90 * units.deg,
+        exhaust_lobe_center: 112 * units.deg,
+        base_radius: 1.0 * units.inch
+    )
+
+    function timing_curve(4000 * units.rpm)
+    timing_curve
+        .add_sample(0000 * units.rpm, 90 * units.deg)
+        .add_sample(4000 * units.rpm, 90 * units.deg)
+        .add_sample(8000 * units.rpm, 90 * units.deg)
+        .add_sample(12000 * units.rpm, 90 * units.deg)
+        .add_sample(14000 * units.rpm, 90 * units.deg)
+        .add_sample(18000 * units.rpm, 90 * units.deg)
+
+    ignition_module ignition_module(
+        timing_curve: timing_curve,
+        rev_limit: 18500 * units.rpm,
+        limiter_duration: 0.1)
+
+    ignition_module
+            .connect_wire(wires.wire0, 0.0 * units.deg)
+            .connect_wire(wires.wire1, 10.434782608695652 * units.deg)
+            .connect_wire(wires.wire2, 20.869565217391305 * units.deg)
+            .connect_wire(wires.wire3, 31.304347826086957 * units.deg)
+            .connect_wire(wires.wire4, 41.73913043478261 * units.deg)
+            .connect_wire(wires.wire5, 52.173913043478265 * units.deg)
+            .connect_wire(wires.wire6, 62.608695652173914 * units.deg)
+            .connect_wire(wires.wire7, 73.04347826086956 * units.deg)
+            .connect_wire(wires.wire8, 83.47826086956522 * units.deg)
+            .connect_wire(wires.wire9, 93.91304347826086 * units.deg)
+            .connect_wire(wires.wire10, 104.34782608695653 * units.deg)
+            .connect_wire(wires.wire11, 114.78260869565216 * units.deg)
+            .connect_wire(wires.wire12, 125.21739130434783 * units.deg)
+            .connect_wire(wires.wire13, 135.65217391304347 * units.deg)
+            .connect_wire(wires.wire14, 146.08695652173913 * units.deg)
+            .connect_wire(wires.wire15, 156.52173913043478 * units.deg)
+            .connect_wire(wires.wire16, 166.95652173913044 * units.deg)
+            .connect_wire(wires.wire17, 177.3913043478261 * units.deg)
+            .connect_wire(wires.wire18, 187.82608695652172 * units.deg)
+            .connect_wire(wires.wire19, 198.2608695652174 * units.deg)
+            .connect_wire(wires.wire20, 208.69565217391306 * units.deg)
+            .connect_wire(wires.wire21, 219.13043478260872 * units.deg)
+            .connect_wire(wires.wire22, 229.56521739130432 * units.deg)
+            .connect_wire(wires.wire23, 240.0 * units.deg)
+            .connect_wire(wires.wire24, 250.43478260869566 * units.deg)
+            .connect_wire(wires.wire25, 260.8695652173913 * units.deg)
+            .connect_wire(wires.wire26, 271.30434782608694 * units.deg)
+            .connect_wire(wires.wire27, 281.7391304347826 * units.deg)
+            .connect_wire(wires.wire28, 292.17391304347825 * units.deg)
+            .connect_wire(wires.wire29, 302.6086956521739 * units.deg)
+            .connect_wire(wires.wire30, 313.04347826086956 * units.deg)
+            .connect_wire(wires.wire31, 323.4782608695652 * units.deg)
+            .connect_wire(wires.wire32, 333.9130434782609 * units.deg)
+            .connect_wire(wires.wire33, 344.34782608695656 * units.deg)
+            .connect_wire(wires.wire34, 354.7826086956522 * units.deg)
+            .connect_wire(wires.wire35, 365.21739130434787 * units.deg)
+            .connect_wire(wires.wire36, 375.65217391304344 * units.deg)
+            .connect_wire(wires.wire37, 386.0869565217392 * units.deg)
+            .connect_wire(wires.wire38, 396.5217391304348 * units.deg)
+            .connect_wire(wires.wire39, 406.9565217391304 * units.deg)
+            .connect_wire(wires.wire40, 417.3913043478261 * units.deg)
+            .connect_wire(wires.wire41, 427.82608695652175 * units.deg)
+            .connect_wire(wires.wire42, 438.26086956521743 * units.deg)
+            .connect_wire(wires.wire43, 448.69565217391306 * units.deg)
+            .connect_wire(wires.wire44, 459.13043478260863 * units.deg)
+            .connect_wire(wires.wire45, 469.5652173913044 * units.deg)
+            .connect_wire(wires.wire46, 480.0 * units.deg)
+            .connect_wire(wires.wire47, 490.4347826086957 * units.deg)
+            .connect_wire(wires.wire48, 500.8695652173913 * units.deg)
+            .connect_wire(wires.wire49, 511.304347826087 * units.deg)
+            .connect_wire(wires.wire50, 521.7391304347826 * units.deg)
+            .connect_wire(wires.wire51, 532.1739130434783 * units.deg)
+            .connect_wire(wires.wire52, 542.6086956521739 * units.deg)
+            .connect_wire(wires.wire53, 553.0434782608695 * units.deg)
+            .connect_wire(wires.wire54, 563.4782608695652 * units.deg)
+            .connect_wire(wires.wire55, 573.9130434782609 * units.deg)
+            .connect_wire(wires.wire56, 584.3478260869565 * units.deg)
+            .connect_wire(wires.wire57, 594.7826086956521 * units.deg)
+            .connect_wire(wires.wire58, 605.2173913043478 * units.deg)
+            .connect_wire(wires.wire59, 615.6521739130435 * units.deg)
+            .connect_wire(wires.wire60, 626.0869565217391 * units.deg)
+            .connect_wire(wires.wire61, 636.5217391304349 * units.deg)
+            .connect_wire(wires.wire62, 646.9565217391304 * units.deg)
+            .connect_wire(wires.wire63, 657.391304347826 * units.deg)
+            .connect_wire(wires.wire64, 667.8260869565217 * units.deg)
+            .connect_wire(wires.wire65, 678.2608695652174 * units.deg)
+            .connect_wire(wires.wire66, 688.6956521739131 * units.deg)
+            .connect_wire(wires.wire67, 699.1304347826086 * units.deg)
+            .connect_wire(wires.wire68, 709.5652173913044 * units.deg)
+
+    engine.add_ignition_module(ignition_module)
+}
+
+private node generated_vehicle {
+    alias output __out:
+        vehicle(
+            mass: 798 * units.kg,
+            drag_coefficient: 0.9,
+            cross_sectional_area: (72 * units.inch) * (36 * units.inch),
+            diff_ratio: 4.10,
+            tire_radius: 9 * units.inch,
+            rolling_resistance: 200 * units.N
+        );
+}
+
+private node generated_transmission {
+    alias output __out:
+        transmission(
+            max_clutch_torque: 1000 * units.lb_ft
+        )
+        .add_gear(2.8)
+        .add_gear(2.29)
+        .add_gear(1.93)
+        .add_gear(1.583)
+        .add_gear(1.375)
+        .add_gear(1.19);
+}
+
+public node main {
+    run(
+        engine: generated_engine(),
+        vehicle: generated_vehicle(),
+        transmission: generated_transmission()
+    )
+}
+
+main()

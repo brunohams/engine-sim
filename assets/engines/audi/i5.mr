@@ -220,3 +220,11 @@ public node audi_i5_2_2L {
         )
     )
 }
+
+public node main {
+    set_engine(audi_i5_2_2L())
+    set_vehicle(vehicle())
+    set_transmission(default_transmission())
+}
+
+main()
