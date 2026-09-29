@@ -369,7 +369,7 @@ class AudioRecorderRunner:
     Manages automated recording of engine audio:
     - Stepped RPM takes (On-Throttle 1.0 & Off-Throttle 0.0) with seamless loops
     - Natural Idle take (seamless loop)
-    - Maximum RPM Revving take (full throttle at redline, seamless loop)
+    - Maximum RPM Free Rev take (full throttle, no RPM limit, engine hits natural max, seamless loop)
     - Engine Turning On take (cold start / cranking to idle, one-shot)
     - Engine Turning Off take (ignition cut spin-down to stop, one-shot)
     """
@@ -553,7 +553,6 @@ class AudioRecorderRunner:
         specs = parse_engine_specs(self.engine_path)
         idle_rpm = specs["idle_rpm"] if specs else 800
         redline = specs["redline"] if specs else 7000
-        max_rev_rpm = max(redline - 100, int(redline * 0.98))
 
         # Calculate task counts
         total_tasks = 0
@@ -668,16 +667,63 @@ class AudioRecorderRunner:
                             recorded_files.append(final_filepath)
                     time.sleep(0.15)
 
-            # 6. Record Maximum RPM Revving Take (Seamless Loop)
+            # 6. Record Maximum RPM Free Rev Take (Seamless Loop)
             if self.record_max_rev and not self.is_cancelled:
                 current_task_idx += 1
-                self._log(f"\n--- [Take {current_task_idx}/{total_tasks}] Maximum RPM Revving ({max_rev_rpm} RPM - Full Throttle) ---")
-                if self._hold_and_settle(max_rev_rpm, 1.0, "MaxRev", current_task_idx, total_tasks):
+                self._log(f"\n--- [Take {current_task_idx}/{total_tasks}] Maximum RPM Free Rev (Full Throttle, No RPM Limit) ---")
+
+                # Use command 3: free rev — dyno OFF, full throttle, engine hits natural max RPM
+                self.bridge.status = 0
+                self.bridge.stableFrames = 0
+                self.bridge.command = 3
+                self.bridge.throttle = 1.0
+
+                if self.progress_cb:
+                    self.progress_cb(current_task_idx, total_tasks, redline, "MaxRev",
+                                     self.bridge.currentRpm, "Free revving to max RPM...")
+
+                # Wait for engine to reach stable max RPM (hook reports status=3 when RPM >= 90% redline)
+                t0 = time.time()
+                timeout = 15.0
+                while (time.time() - t0) < timeout:
+                    if self.is_cancelled: break
+                    current_rpm = self.bridge.currentRpm
+                    status_code = self.bridge.status
+
+                    status_msg = "Revving up..." if status_code == 2 else \
+                                 "At max RPM" if status_code == 3 else "Accelerating..."
+                    if self.progress_cb:
+                        self.progress_cb(current_task_idx, total_tasks, redline, "MaxRev",
+                                         current_rpm, status_msg)
+                    if status_code == 3:
+                        break
+                    time.sleep(0.08)
+
+                if not self.is_cancelled:
+                    # Acoustic settle at max rev
+                    self._log(f"Engine at max RPM ({self.bridge.currentRpm:.0f}). Settling {self.settle_delay:.1f}s...")
+                    t_settle = time.time()
+                    while time.time() - t_settle < self.settle_delay:
+                        if self.is_cancelled: break
+                        if self.progress_cb:
+                            rem = self.settle_delay - (time.time() - t_settle)
+                            self.progress_cb(current_task_idx, total_tasks, redline, "MaxRev",
+                                             self.bridge.currentRpm, f"Acoustic settle ({rem:.1f}s)...")
+                        time.sleep(0.08)
+
+                if not self.is_cancelled:
+                    # Use the actual current RPM for loop alignment (engine's natural max)
+                    actual_max_rpm = self.bridge.currentRpm
                     out_filename = f"{engine_basename}_MaxRev.wav"
                     final_filepath = os.path.join(self.output_dir, out_filename)
-                    if self._record_audio_take(recorder_exe, final_filepath, max_rev_rpm, "MaxRev",
+                    if self._record_audio_take(recorder_exe, final_filepath, actual_max_rpm, "MaxRev",
                                                is_loop=True, take_idx=current_task_idx, total_tasks=total_tasks):
+                        # Also trim any silence just in case
+                        trim_silence(final_filepath)
                         recorded_files.append(final_filepath)
+
+                # Restore to command 1 for subsequent takes
+                self.bridge.command = 1
                 time.sleep(0.15)
 
             # 7. Record Engine Turning Off (Shutdown - One-Shot)

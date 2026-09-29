@@ -204,8 +204,43 @@ extern "C" void DoHookLogic(void *app) {
                         g_bridge->status = 2;
                     }
                 }
+            } else if (cmd == 3) {
+                // Command 3: Free Rev — full throttle, dyno OFF, engine revs to natural max RPM
+                double thr = 1.0;
+                if (g_bridge && g_bridge->throttle > 0.0 && g_bridge->throttle <= 1.0) {
+                    thr = g_bridge->throttle;
+                }
+
+                *pStarter = false;
+                *pDynoEnabled = false;
+                *pDynoHold = false;
+                *pTargetThrottle = thr;
+                *pCurrentThrottle = thr;
+
+                if (g_bridge) {
+                    // Read redline from Engine object (offset 0xC8)
+                    double redlineRadS = *(double *)((BYTE *)iceEngine + 0xC8);
+                    double redlineRpm = redlineRadS / 0.10471975511965977;
+                    if (redlineRpm < 1000.0 || redlineRpm > 25000.0 || std::isnan(redlineRpm)) {
+                        redlineRpm = 7000.0;
+                    }
+
+                    // Consider stable when RPM >= 90% of redline
+                    double threshold = redlineRpm * 0.90;
+                    if (currentRpm >= threshold) {
+                        g_bridge->stableFrames++;
+                        if (g_bridge->stableFrames >= 20) {
+                            g_bridge->status = 3; // Stable at max rev
+                        } else {
+                            g_bridge->status = 2;
+                        }
+                    } else {
+                        g_bridge->stableFrames = 0;
+                        g_bridge->status = 2;
+                    }
+                }
             } else {
-                // Command 1 or 3: Hold at target RPM with specified throttle (or Max RPM)
+                // Command 1: Hold at target RPM with specified throttle
                 int target = (int)starterSpeedRpm;
                 double thr = 1.0;
                 if (g_bridge) {
