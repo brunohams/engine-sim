@@ -1,5 +1,5 @@
 import "engine_sim.mr"
 import "themes/default.mr"
-import "engines/formula_1_v10_v3.mr"
+import "engines/mercedes/sls_amg_gt3_m159.mr"
 use_default_theme()
 main()

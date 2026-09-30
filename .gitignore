@@ -1,13 +1,77 @@
 # Ignore user's workspace
 workspace/
 
-# Build directory
+# Build directories & CMake output
 build/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+
+# Recordings output directory & archives
 recordings/
+*.rar
+*.zip
+*.7z
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Visual Studio & IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+*.VC.db
+*.VC.opendb
 
 # clangd cache and code completion files
 .cache
 compile_commands.json
 
+# C/C++ compiler and build artifacts
+*.obj
+*.ilk
+*.pdb
+*.exp
+*.lib
+!dependencies/discord/lib/discord-rpc.lib
+
+# Logs and runtime temporary files
+*.log
+*.tmp
+bin/*.log
+bin/*.tmp
+bin/session_info.tmp
+bin/theme.tmp
+engine_hook.log
+engine_hook.obj
+
+# Scratch & experimental test scripts/dumps
+scratch/
+instructions.json
+instructions.txt
+
+# Obsolete test hook binaries in bin/
+bin/bridge_inspect.dll
+bin/bridge_test.dll
+bin/input_hook.dll
+bin/input_hook.cpp
+bin/test_hook.dll
+
+# Old superseded scripts (replaced by engine_recorder_gui.py and engine_recorder_backend.py)
+auto_record.py
+record_engine.py
+recorder_ui.py
+run_auto_record.bat
+
 # Blender temporary files
 *.blend1
+
+# OS generated files
+.DS_Store
+Thumbs.db
