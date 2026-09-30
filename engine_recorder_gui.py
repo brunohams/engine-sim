@@ -3,6 +3,7 @@ import sys
 import time
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
+import math
 import engine_recorder_backend as backend
 
 class EngineRecorderApp:
@@ -158,8 +159,8 @@ class EngineRecorderApp:
                                          font=("Segoe UI", 9), bg=self.panel_bg, fg=self.fg_color)
         self.engine_stats_lbl.pack(anchor="w", pady=(2, 0))
 
-        # 3. Special Takes Section (Startup, Idle, Max Rev, Shutdown)
-        special_group = ttk.LabelFrame(main_container, text=" 2. Special Engine Audio Takes ", padding="10")
+        # 3. Special Takes & Throttle Transients Section
+        special_group = ttk.LabelFrame(main_container, text=" 2. Special Engine Audio Takes & Transients ", padding="10")
         special_group.pack(fill=tk.X, pady=(0, 6))
 
         spec_row = ttk.Frame(special_group)
@@ -197,6 +198,40 @@ class EngineRecorderApp:
                                      activebackground=self.bg_color, activeforeground="#fb923c",
                                      command=self._update_selected_count)
         cb_shutdown.pack(side=tk.LEFT)
+
+        # Transients Row: Blips & Lifts (One-shot, no loop)
+        transient_row = ttk.Frame(special_group)
+        transient_row.pack(fill=tk.X, pady=(8, 0))
+
+        self.blip_var = tk.BooleanVar(value=True)
+        self.lift_var = tk.BooleanVar(value=True)
+
+        cb_blip = tk.Checkbutton(transient_row, text="Blip (0% → 100% Kick)",
+                                 variable=self.blip_var, font=("Segoe UI", 9, "bold"),
+                                 bg=self.bg_color, fg="#38bdf8", selectcolor=self.input_bg,
+                                 activebackground=self.bg_color, activeforeground="#38bdf8",
+                                 command=self._update_selected_count)
+        cb_blip.pack(side=tk.LEFT, padx=(0, 18))
+
+        cb_lift = tk.Checkbutton(transient_row, text="Lift (100% → 0% Drop)",
+                                 variable=self.lift_var, font=("Segoe UI", 9, "bold"),
+                                 bg=self.bg_color, fg="#facc15", selectcolor=self.input_bg,
+                                 activebackground=self.bg_color, activeforeground="#facc15",
+                                 command=self._update_selected_count)
+        cb_lift.pack(side=tk.LEFT, padx=(0, 18))
+
+        ttk.Label(transient_row, text="Blip/Lift Interval:").pack(side=tk.LEFT, padx=(0, 6))
+        self.blip_lift_step_combo = ttk.Combobox(
+            transient_row,
+            values=["1,000 RPM", "2,000 RPM (Default)", "3,000 RPM", "Same as Stepped RPMs", "Selected RPMs Only"],
+            state="readonly", width=22
+        )
+        self.blip_lift_step_combo.current(1)
+        self.blip_lift_step_combo.pack(side=tk.LEFT, padx=(0, 10))
+        self.blip_lift_step_combo.bind("<<ComboboxSelected>>", lambda e: self._update_selected_count())
+
+        self.blip_lift_info_lbl = tk.Label(transient_row, text="", bg=self.bg_color, fg="#94a3b8", font=("Segoe UI", 8))
+        self.blip_lift_info_lbl.pack(side=tk.LEFT)
 
         # 4. RPM Values Selection Section
         rpm_group = ttk.LabelFrame(main_container, text=" 3. Stepped Engine RPM Values to Record (Above Idle) ", padding="10")
@@ -433,17 +468,60 @@ class EngineRecorderApp:
 
         self._update_selected_count()
 
+    def _get_blip_lift_rpms(self):
+        if not self.current_engine_specs:
+            return []
+        sel = self.blip_lift_step_combo.get()
+        if "Selected RPMs" in sel:
+            return sorted([rpm for rpm, var in self.rpm_vars.items() if var.get()])
+        if "Same as Stepped" in sel:
+            return list(self.current_engine_specs.get("generated_rpms", []))
+
+        step = 2000
+        if "1,000" in sel: step = 1000
+        elif "2,000" in sel: step = 2000
+        elif "3,000" in sel: step = 3000
+
+        idle_rpm = self.current_engine_specs.get("idle_rpm", self.current_engine_specs.get("starter_speed", 800))
+        redline = self.current_engine_specs.get("redline", 7000)
+
+        start_rpm = int(math.ceil((idle_rpm + 50) / step) * step)
+        if start_rpm <= idle_rpm:
+            start_rpm += step
+
+        rpms = [r for r in range(start_rpm, redline, step)]
+        if not rpms and redline > idle_rpm + 200:
+            rpms = [(idle_rpm + redline) // 2]
+        return rpms
+
     def _update_selected_count(self):
         selected_rpms = sum(1 for v in self.rpm_vars.values() if v.get())
         modes = self._get_throttle_modes()
         stepped_takes = selected_rpms * len(modes)
 
         special_takes = sum(1 for v in [self.startup_var.get(), self.idle_var.get(), self.max_rev_var.get(), self.shutdown_var.get()] if v)
-        total_takes = stepped_takes + special_takes
+
+        blip_lift_rpms = self._get_blip_lift_rpms()
+        blip_takes = len(blip_lift_rpms) if self.blip_var.get() else 0
+        lift_takes = len(blip_lift_rpms) if self.lift_var.get() else 0
+        transient_takes = blip_takes + lift_takes
+
+        total_takes = stepped_takes + special_takes + transient_takes
+
+        # Update transient info label
+        if (self.blip_var.get() or self.lift_var.get()) and blip_lift_rpms:
+            rpm_sample = ", ".join(f"{r:,}" for r in blip_lift_rpms[:3])
+            if len(blip_lift_rpms) > 3:
+                rpm_sample += f", ... ({len(blip_lift_rpms)} stages)"
+            self.blip_lift_info_lbl.config(text=f"[{rpm_sample}]")
+        else:
+            self.blip_lift_info_lbl.config(text="")
 
         parts = []
         if special_takes > 0:
             parts.append(f"{special_takes} Special")
+        if transient_takes > 0:
+            parts.append(f"{transient_takes} Transients ({blip_takes} Blip, {lift_takes} Lift)")
         if selected_rpms > 0:
             parts.append(f"{selected_rpms} RPMs ({stepped_takes} takes)")
 
@@ -484,9 +562,13 @@ class EngineRecorderApp:
 
         selected_rpms = [rpm for rpm, var in self.rpm_vars.items() if var.get()]
         has_special = any([self.startup_var.get(), self.idle_var.get(), self.max_rev_var.get(), self.shutdown_var.get()])
+        blip_lift_rpms = self._get_blip_lift_rpms()
+        record_blips = self.blip_var.get()
+        record_lifts = self.lift_var.get()
+        transient_takes = (len(blip_lift_rpms) if record_blips else 0) + (len(blip_lift_rpms) if record_lifts else 0)
 
-        if not selected_rpms and not has_special:
-            messagebox.showwarning("Nothing Selected", "Please select at least one RPM or special take to record.")
+        if not selected_rpms and not has_special and transient_takes == 0:
+            messagebox.showwarning("Nothing Selected", "Please select at least one RPM, special take, or blip/lift transient to record.")
             return
 
         try:
@@ -507,7 +589,7 @@ class EngineRecorderApp:
         throttle_modes = self._get_throttle_modes()
         stepped_takes = len(selected_rpms) * len(throttle_modes)
         special_takes = sum(1 for v in [self.startup_var.get(), self.idle_var.get(), self.max_rev_var.get(), self.shutdown_var.get()] if v)
-        total_takes = stepped_takes + special_takes
+        total_takes = stepped_takes + special_takes + transient_takes
 
         out_dir = self.out_dir_var.get()
         os.makedirs(out_dir, exist_ok=True)
@@ -517,11 +599,12 @@ class EngineRecorderApp:
         self.stop_btn.config(state=tk.NORMAL)
         self.engine_combo.config(state=tk.DISABLED)
         self.step_combo.config(state=tk.DISABLED)
+        self.blip_lift_step_combo.config(state=tk.DISABLED)
         self.throttle_mode_combo.config(state=tk.DISABLED)
         self.progress_bar["value"] = 0
         self.progress_bar["maximum"] = total_takes
 
-        self._log(f"Starting session: {total_takes} total takes ({special_takes} special, {stepped_takes} stepped RPMs).")
+        self._log(f"Starting session: {total_takes} total takes ({special_takes} special, {transient_takes} transients, {stepped_takes} stepped RPMs).")
 
         self.runner = backend.AudioRecorderRunner(
             engine_path=self.current_engine_specs["path"],
@@ -535,6 +618,9 @@ class EngineRecorderApp:
             record_idle=self.idle_var.get(),
             record_max_rev=self.max_rev_var.get(),
             record_shutdown=self.shutdown_var.get(),
+            record_blips=record_blips,
+            record_lifts=record_lifts,
+            blip_lift_rpms=blip_lift_rpms,
             progress_cb=self._on_progress_update,
             log_cb=self._on_runner_log,
             finished_cb=self._on_runner_finished
@@ -552,7 +638,7 @@ class EngineRecorderApp:
             self.progress_bar["value"] = max(0, take_idx - 1)
             rpm_display = f"{target_rpm} RPM" if target_rpm > 0 else ""
             self.status_lbl.config(
-                text=f"Take {take_idx}/{total_tasks} ({mode_suffix} {rpm_display}) | Live: {current_rpm:.0f} RPM | {status_text}"
+                text=f"Take {take_idx}/{total_takes} ({mode_suffix} {rpm_display}) | Live: {current_rpm:.0f} RPM | {status_text}"
             )
         self.root.after(0, _update)
 
@@ -565,6 +651,7 @@ class EngineRecorderApp:
             self.stop_btn.config(state=tk.DISABLED)
             self.engine_combo.config(state="readonly")
             self.step_combo.config(state="readonly")
+            self.blip_lift_step_combo.config(state="readonly")
             self.throttle_mode_combo.config(state="readonly")
             self.progress_bar["value"] = self.progress_bar["maximum"]
 
@@ -574,7 +661,7 @@ class EngineRecorderApp:
                 
                 res = messagebox.askyesno(
                     "Recording Complete",
-                    f"Successfully recorded {len(files)} audio takes!\n\nIncludes special takes & seamless loops.\n\nOpen output folder now?"
+                    f"Successfully recorded {len(files)} audio takes!\n\nIncludes special takes, blips/lifts & seamless loops.\n\nOpen output folder now?"
                 )
                 if res:
                     self._on_open_output_dir()

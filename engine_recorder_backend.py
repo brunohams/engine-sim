@@ -286,6 +286,115 @@ def trim_silence(wav_path, out_path=None, threshold_db=-40.0, margin_sec=0.05, w
     return len(out_int16) / rate
 
 
+def crop_transient_centered(wav_path, mode="blip", target_duration=3.0, expected_time=None, out_path=None):
+    """
+    Detects the throttle change transition in a Blip or Lift audio recording and crops
+    the file symmetrically so the change event is positioned at the exact 50% midpoint,
+    with equal distance to the start and end of the audio.
+    - mode: "blip" (detects step increase in energy) or "lift" (detects step decrease)
+    - target_duration: Desired final audio duration (seconds)
+    - expected_time: Approximate time in seconds when throttle snap was triggered (for focused search)
+    - out_path: Output WAV file (defaults to in-place overwrite)
+    """
+    if out_path is None:
+        out_path = wav_path
+
+    with wave.open(wav_path, 'rb') as w:
+        rate = w.getframerate()
+        nchannels = w.getnchannels()
+        sampwidth = w.getsampwidth()
+        nframes = w.getnframes()
+        frames = w.readframes(nframes)
+
+    if nframes == 0:
+        return None
+
+    data = np.frombuffer(frames, dtype=np.int16).reshape(-1, nchannels)
+    mono = data.astype(np.float64).mean(axis=1)
+
+    # 1. Trim leading dead silence (zeros) so true audio begins at index 0
+    thresh = 32767.0 * (10.0 ** (-40.0 / 20.0))
+    above = np.where(np.abs(mono) > thresh)[0]
+    if len(above) > 0 and above[0] > int(0.01 * rate):
+        lead_cut = max(0, above[0] - int(0.01 * rate))
+        data = data[lead_cut:]
+        mono = mono[lead_cut:]
+
+    dur = len(mono) / rate
+
+    # Compute short-time RMS envelope: 20ms window with 5ms hop
+    win_len = int(0.02 * rate)
+    hop = int(0.005 * rate)
+    n_hops = (len(mono) - win_len) // hop
+    if n_hops < 20:
+        return dur
+
+    rms = np.array([np.sqrt(np.mean(mono[i * hop : i * hop + win_len] ** 2)) for i in range(n_hops)])
+    times = (np.arange(n_hops) * hop + win_len // 2) / rate
+
+    # Difference filter: compare average energy of 0.15s after vs 0.15s before
+    span = max(1, int(0.15 / 0.005))
+    if len(rms) <= 2 * span:
+        return dur
+
+    diffs = []
+    diff_times = []
+    for i in range(span, len(rms) - span):
+        pre = np.mean(rms[i - span : i])
+        post = np.mean(rms[i : i + span])
+        d = (post - pre) if mode.lower() == "blip" else (pre - post)
+        diffs.append(d)
+        diff_times.append(times[i])
+
+    diffs = np.array(diffs)
+    diff_times = np.array(diff_times)
+
+    # Restrict search window if expected_time is provided
+    if expected_time is not None:
+        mask = (diff_times >= max(0.2, expected_time - 0.7)) & (diff_times <= min(dur - 0.2, expected_time + 0.9))
+        if not np.any(mask):
+            mask = (diff_times >= 0.2) & (diff_times <= dur - 0.2)
+    else:
+        mask = (diff_times >= 0.2) & (diff_times <= dur - 0.2)
+
+    valid_diffs = np.where(mask, diffs, -1e9)
+    best_idx = np.argmax(valid_diffs)
+    change_time = diff_times[best_idx]
+    change_sample = int(change_time * rate)
+
+    # Calculate symmetric half-duration
+    half_dur = target_duration / 2.0
+    avail_pre = change_sample
+    avail_post = len(data) - change_sample
+    final_half_samples = min(int(half_dur * rate), avail_pre, avail_post)
+
+    start_sample = max(0, change_sample - final_half_samples)
+    end_sample = min(len(data), change_sample + final_half_samples)
+
+    # Guarantee exact symmetric distance on both sides
+    actual_half = min(change_sample - start_sample, end_sample - change_sample)
+    start_sample = change_sample - actual_half
+    end_sample = change_sample + actual_half
+
+    cropped = data[start_sample:end_sample].copy()
+
+    # Apply 5ms fade-in and fade-out to prevent clicks at boundaries
+    fade_len = min(len(cropped) // 4, int(0.005 * rate))
+    if fade_len > 0:
+        fade_in = np.linspace(0.0, 1.0, fade_len)[:, np.newaxis]
+        fade_out = np.linspace(1.0, 0.0, fade_len)[:, np.newaxis]
+        cropped[:fade_len] = np.clip(cropped[:fade_len] * fade_in, -32768, 32767).astype(np.int16)
+        cropped[-fade_len:] = np.clip(cropped[-fade_len:] * fade_out, -32768, 32767).astype(np.int16)
+
+    with wave.open(out_path, 'wb') as w:
+        w.setnchannels(nchannels)
+        w.setsampwidth(sampwidth)
+        w.setframerate(rate)
+        w.writeframes(cropped.tobytes())
+
+    return len(cropped) / rate
+
+
 def create_perfect_loop(raw_wav_path, out_wav_path, rpm, target_duration=3.0, xfade_sec=0.25, lead_trim_sec=0.4):
     """
     Transforms raw recorded audio into a mathematically seamless audio loop.
@@ -376,6 +485,7 @@ class AudioRecorderRunner:
     def __init__(self, engine_path, rpms_to_record=None, duration=3.0, settle_delay=1.5,
                  throttle_modes=None, make_seamless_loop=True, output_dir="recordings",
                  record_startup=False, record_idle=False, record_max_rev=False, record_shutdown=False,
+                 record_blips=False, record_lifts=False, blip_lift_rpms=None,
                  progress_cb=None, log_cb=None, finished_cb=None):
         self.engine_path = os.path.abspath(engine_path)
         self.rpms_to_record = sorted(list(rpms_to_record)) if rpms_to_record else []
@@ -388,6 +498,9 @@ class AudioRecorderRunner:
         self.record_idle = bool(record_idle)
         self.record_max_rev = bool(record_max_rev)
         self.record_shutdown = bool(record_shutdown)
+        self.record_blips = bool(record_blips)
+        self.record_lifts = bool(record_lifts)
+        self.blip_lift_rpms = sorted(list(blip_lift_rpms)) if blip_lift_rpms else []
 
         # Default throttle modes: Both ("On" = 1.0, "Off" = 0.0)
         if throttle_modes is None:
@@ -559,11 +672,17 @@ class AudioRecorderRunner:
         if self.record_startup: total_tasks += 1
         if self.record_idle: total_tasks += 1
         total_tasks += len(self.rpms_to_record) * len(self.throttle_modes)
+        blip_lift_count = 0
+        if self.record_blips: blip_lift_count += len(self.blip_lift_rpms)
+        if self.record_lifts: blip_lift_count += len(self.blip_lift_rpms)
+        total_tasks += blip_lift_count
         if self.record_max_rev: total_tasks += 1
         if self.record_shutdown: total_tasks += 1
 
         self._log(f"Starting session for engine: {engine_basename}")
         self._log(f"Special Takes -> Startup: {self.record_startup}, Idle: {self.record_idle}, MaxRev: {self.record_max_rev}, Shutdown: {self.record_shutdown}")
+        if self.record_blips or self.record_lifts:
+            self._log(f"Blip/Lift Takes -> Blips: {self.record_blips}, Lifts: {self.record_lifts}, RPMs: {self.blip_lift_rpms}")
         self._log(f"Stepped RPMs ({len(self.rpms_to_record)}): {self.rpms_to_record}")
         self._log(f"Total takes to record: {total_tasks}")
 
@@ -667,7 +786,127 @@ class AudioRecorderRunner:
                             recorded_files.append(final_filepath)
                     time.sleep(0.15)
 
-            # 6. Record Maximum RPM Free Rev Take (Seamless Loop)
+            # 6. Record Blip Takes (Throttle 0→1 at each RPM, centered one-shot)
+            if self.record_blips and self.blip_lift_rpms and not self.is_cancelled:
+                for target_rpm in self.blip_lift_rpms:
+                    if self.is_cancelled: break
+                    current_task_idx += 1
+                    self._log(f"\n--- [Take {current_task_idx}/{total_tasks}] Blip at {target_rpm} RPM (Throttle 0%→100%) ---")
+
+                    # Hold at target RPM with throttle OFF first
+                    if self._hold_and_settle(target_rpm, 0.0, "Blip", current_task_idx, total_tasks):
+                        time.sleep(0.5)
+
+                        out_filename = f"{engine_basename}_{target_rpm}rpm_Blip.wav"
+                        out_filepath = os.path.join(self.output_dir, out_filename)
+
+                        # Symmetric timing: capture equal margins before and after the snap
+                        half_dur = max(0.8, self.duration / 2.0)
+                        pre_snap_wait = half_dur + 0.6
+                        post_snap_wait = half_dur + 0.6
+                        raw_rec_dur = pre_snap_wait + post_snap_wait + 0.5
+
+                        if self.progress_cb:
+                            self.progress_cb(current_task_idx, total_tasks, target_rpm, "Blip",
+                                             self.bridge.currentRpm, f"Recording Blip (0%→100%, {self.duration:.1f}s centered)...")
+
+                        # Start recorder, capture pre-snap baseline, snap throttle to 1.0, capture post-snap
+                        t_rec_start = time.time()
+                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur)])
+
+                        t_wait = time.time()
+                        while time.time() - t_wait < pre_snap_wait:
+                            if self.is_cancelled: break
+                            time.sleep(0.05)
+
+                        t_snap = time.time()
+                        expected_snap_sec = t_snap - t_rec_start
+                        self.bridge.throttle = 1.0
+                        self._log(f"Throttle snapped to 100% at {self.bridge.currentRpm:.0f} RPM (snap t={expected_snap_sec:.2f}s)")
+
+                        rec_proc.wait(timeout=raw_rec_dur + 10)
+
+                        if os.path.exists(out_filepath) and os.path.getsize(out_filepath) > 1000:
+                            cropped_dur = crop_transient_centered(
+                                out_filepath,
+                                mode="blip",
+                                target_duration=self.duration,
+                                expected_time=expected_snap_sec
+                            )
+                            if cropped_dur:
+                                size_kb = os.path.getsize(out_filepath) // 1024
+                                half_dist = cropped_dur / 2.0
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s | Change centered at {half_dist:.2f}s, symmetric {half_dist:.2f}s margins)")
+                            else:
+                                size_kb = os.path.getsize(out_filepath) // 1024
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, one-shot)")
+                            recorded_files.append(out_filepath)
+
+                    time.sleep(0.15)
+
+                self.bridge.throttle = 0.0
+
+            # 7. Record Lift Takes (Throttle 1→0 at each RPM, centered one-shot)
+            if self.record_lifts and self.blip_lift_rpms and not self.is_cancelled:
+                for target_rpm in self.blip_lift_rpms:
+                    if self.is_cancelled: break
+                    current_task_idx += 1
+                    self._log(f"\n--- [Take {current_task_idx}/{total_tasks}] Lift at {target_rpm} RPM (Throttle 100%→0%) ---")
+
+                    # Hold at target RPM with throttle ON first
+                    if self._hold_and_settle(target_rpm, 1.0, "Lift", current_task_idx, total_tasks):
+                        time.sleep(0.5)
+
+                        out_filename = f"{engine_basename}_{target_rpm}rpm_Lift.wav"
+                        out_filepath = os.path.join(self.output_dir, out_filename)
+
+                        # Symmetric timing: capture equal margins before and after the snap
+                        half_dur = max(0.8, self.duration / 2.0)
+                        pre_snap_wait = half_dur + 0.6
+                        post_snap_wait = half_dur + 0.6
+                        raw_rec_dur = pre_snap_wait + post_snap_wait + 0.5
+
+                        if self.progress_cb:
+                            self.progress_cb(current_task_idx, total_tasks, target_rpm, "Lift",
+                                             self.bridge.currentRpm, f"Recording Lift (100%→0%, {self.duration:.1f}s centered)...")
+
+                        # Start recorder, capture pre-snap baseline, snap throttle to 0.0, capture post-snap
+                        t_rec_start = time.time()
+                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur)])
+
+                        t_wait = time.time()
+                        while time.time() - t_wait < pre_snap_wait:
+                            if self.is_cancelled: break
+                            time.sleep(0.05)
+
+                        t_snap = time.time()
+                        expected_snap_sec = t_snap - t_rec_start
+                        self.bridge.throttle = 0.0
+                        self._log(f"Throttle snapped to 0% at {self.bridge.currentRpm:.0f} RPM (snap t={expected_snap_sec:.2f}s)")
+
+                        rec_proc.wait(timeout=raw_rec_dur + 10)
+
+                        if os.path.exists(out_filepath) and os.path.getsize(out_filepath) > 1000:
+                            cropped_dur = crop_transient_centered(
+                                out_filepath,
+                                mode="lift",
+                                target_duration=self.duration,
+                                expected_time=expected_snap_sec
+                            )
+                            if cropped_dur:
+                                size_kb = os.path.getsize(out_filepath) // 1024
+                                half_dist = cropped_dur / 2.0
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s | Change centered at {half_dist:.2f}s, symmetric {half_dist:.2f}s margins)")
+                            else:
+                                size_kb = os.path.getsize(out_filepath) // 1024
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, one-shot)")
+                            recorded_files.append(out_filepath)
+
+                    time.sleep(0.15)
+
+                self.bridge.throttle = 0.0
+
+            # 8. Record Maximum RPM Free Rev Take (Seamless Loop)
             if self.record_max_rev and not self.is_cancelled:
                 current_task_idx += 1
                 self._log(f"\n--- [Take {current_task_idx}/{total_tasks}] Maximum RPM Free Rev (Full Throttle, No RPM Limit) ---")
