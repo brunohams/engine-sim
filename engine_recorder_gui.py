@@ -230,6 +230,15 @@ class EngineRecorderApp:
         self.blip_lift_step_combo.pack(side=tk.LEFT, padx=(0, 10))
         self.blip_lift_step_combo.bind("<<ComboboxSelected>>", lambda e: self._update_selected_count())
 
+        ttk.Label(transient_row, text="Duration:").pack(side=tk.LEFT, padx=(4, 4))
+        self.transient_dur_combo = ttk.Combobox(
+            transient_row,
+            values=["0.5s", "0.6s", "0.7s (Default)", "0.8s", "1.0s"],
+            state="readonly", width=14
+        )
+        self.transient_dur_combo.current(2)
+        self.transient_dur_combo.pack(side=tk.LEFT, padx=(0, 10))
+
         self.blip_lift_info_lbl = tk.Label(transient_row, text="", bg=self.bg_color, fg="#94a3b8", font=("Segoe UI", 8))
         self.blip_lift_info_lbl.pack(side=tk.LEFT)
 
@@ -494,6 +503,14 @@ class EngineRecorderApp:
             rpms = [(idle_rpm + redline) // 2]
         return rpms
 
+    def _get_transient_duration(self):
+        sel = self.transient_dur_combo.get()
+        if "0.5" in sel: return 0.5
+        if "0.6" in sel: return 0.6
+        if "0.8" in sel: return 0.8
+        if "1.0" in sel: return 1.0
+        return 0.7
+
     def _update_selected_count(self):
         selected_rpms = sum(1 for v in self.rpm_vars.values() if v.get())
         modes = self._get_throttle_modes()
@@ -600,6 +617,7 @@ class EngineRecorderApp:
         self.engine_combo.config(state=tk.DISABLED)
         self.step_combo.config(state=tk.DISABLED)
         self.blip_lift_step_combo.config(state=tk.DISABLED)
+        self.transient_dur_combo.config(state=tk.DISABLED)
         self.throttle_mode_combo.config(state=tk.DISABLED)
         self.progress_bar["value"] = 0
         self.progress_bar["maximum"] = total_takes
@@ -621,6 +639,7 @@ class EngineRecorderApp:
             record_blips=record_blips,
             record_lifts=record_lifts,
             blip_lift_rpms=blip_lift_rpms,
+            transient_duration=self._get_transient_duration(),
             progress_cb=self._on_progress_update,
             log_cb=self._on_runner_log,
             finished_cb=self._on_runner_finished
@@ -652,6 +671,7 @@ class EngineRecorderApp:
             self.engine_combo.config(state="readonly")
             self.step_combo.config(state="readonly")
             self.blip_lift_step_combo.config(state="readonly")
+            self.transient_dur_combo.config(state="readonly")
             self.throttle_mode_combo.config(state="readonly")
             self.progress_bar["value"] = self.progress_bar["maximum"]
 

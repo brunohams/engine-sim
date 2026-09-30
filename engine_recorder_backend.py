@@ -485,7 +485,7 @@ class AudioRecorderRunner:
     def __init__(self, engine_path, rpms_to_record=None, duration=3.0, settle_delay=1.5,
                  throttle_modes=None, make_seamless_loop=True, output_dir="recordings",
                  record_startup=False, record_idle=False, record_max_rev=False, record_shutdown=False,
-                 record_blips=False, record_lifts=False, blip_lift_rpms=None,
+                 record_blips=False, record_lifts=False, blip_lift_rpms=None, transient_duration=0.7,
                  progress_cb=None, log_cb=None, finished_cb=None):
         self.engine_path = os.path.abspath(engine_path)
         self.rpms_to_record = sorted(list(rpms_to_record)) if rpms_to_record else []
@@ -501,6 +501,7 @@ class AudioRecorderRunner:
         self.record_blips = bool(record_blips)
         self.record_lifts = bool(record_lifts)
         self.blip_lift_rpms = sorted(list(blip_lift_rpms)) if blip_lift_rpms else []
+        self.transient_duration = max(0.3, min(2.0, float(transient_duration)))
 
         # Default throttle modes: Both ("On" = 1.0, "Off" = 0.0)
         if throttle_modes is None:
@@ -786,7 +787,7 @@ class AudioRecorderRunner:
                             recorded_files.append(final_filepath)
                     time.sleep(0.15)
 
-            # 6. Record Blip Takes (Throttle 0→1 at each RPM, centered one-shot)
+            # 6. Record Blip Takes (Throttle 0→1 at each RPM, centered transient < 1s)
             if self.record_blips and self.blip_lift_rpms and not self.is_cancelled:
                 for target_rpm in self.blip_lift_rpms:
                     if self.is_cancelled: break
@@ -795,48 +796,48 @@ class AudioRecorderRunner:
 
                     # Hold at target RPM with throttle OFF first
                     if self._hold_and_settle(target_rpm, 0.0, "Blip", current_task_idx, total_tasks):
-                        time.sleep(0.5)
+                        time.sleep(0.4)
 
                         out_filename = f"{engine_basename}_{target_rpm}rpm_Blip.wav"
                         out_filepath = os.path.join(self.output_dir, out_filename)
 
-                        # Symmetric timing: capture equal margins before and after the snap
-                        half_dur = max(0.8, self.duration / 2.0)
-                        pre_snap_wait = half_dur + 0.6
-                        post_snap_wait = half_dur + 0.6
-                        raw_rec_dur = pre_snap_wait + post_snap_wait + 0.5
+                        # Record the full 3 seconds (or self.duration)
+                        raw_rec_dur = max(3.0, self.duration)
+                        pre_snap_wait = raw_rec_dur / 2.0  # 1.5s
 
                         if self.progress_cb:
                             self.progress_cb(current_task_idx, total_tasks, target_rpm, "Blip",
-                                             self.bridge.currentRpm, f"Recording Blip (0%→100%, {self.duration:.1f}s centered)...")
+                                             self.bridge.currentRpm, f"Recording Blip (3s capture → <1s transient crop)...")
 
-                        # Start recorder, capture pre-snap baseline, snap throttle to 1.0, capture post-snap
+                        # Start recorder for full 3 seconds
                         t_rec_start = time.time()
-                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur)])
+                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur + 0.2)])
 
                         t_wait = time.time()
                         while time.time() - t_wait < pre_snap_wait:
                             if self.is_cancelled: break
-                            time.sleep(0.05)
+                            time.sleep(0.04)
 
+                        # At 1.5s midpoint, snap throttle to 1.0
                         t_snap = time.time()
                         expected_snap_sec = t_snap - t_rec_start
                         self.bridge.throttle = 1.0
                         self._log(f"Throttle snapped to 100% at {self.bridge.currentRpm:.0f} RPM (snap t={expected_snap_sec:.2f}s)")
 
-                        rec_proc.wait(timeout=raw_rec_dur + 10)
+                        rec_proc.wait(timeout=raw_rec_dur + 8)
 
+                        # Crop the 3-second recording to only save the blip transient (< 1s)
                         if os.path.exists(out_filepath) and os.path.getsize(out_filepath) > 1000:
                             cropped_dur = crop_transient_centered(
                                 out_filepath,
                                 mode="blip",
-                                target_duration=self.duration,
+                                target_duration=self.transient_duration,
                                 expected_time=expected_snap_sec
                             )
                             if cropped_dur:
                                 size_kb = os.path.getsize(out_filepath) // 1024
                                 half_dist = cropped_dur / 2.0
-                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s | Change centered at {half_dist:.2f}s, symmetric {half_dist:.2f}s margins)")
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s transient < 1s | Midpoint at {half_dist:.2f}s)")
                             else:
                                 size_kb = os.path.getsize(out_filepath) // 1024
                                 self._log(f"Saved: {out_filename} ({size_kb} KB, one-shot)")
@@ -846,7 +847,7 @@ class AudioRecorderRunner:
 
                 self.bridge.throttle = 0.0
 
-            # 7. Record Lift Takes (Throttle 1→0 at each RPM, centered one-shot)
+            # 7. Record Lift Takes (Throttle 1→0 at each RPM, centered transient < 1s)
             if self.record_lifts and self.blip_lift_rpms and not self.is_cancelled:
                 for target_rpm in self.blip_lift_rpms:
                     if self.is_cancelled: break
@@ -855,48 +856,48 @@ class AudioRecorderRunner:
 
                     # Hold at target RPM with throttle ON first
                     if self._hold_and_settle(target_rpm, 1.0, "Lift", current_task_idx, total_tasks):
-                        time.sleep(0.5)
+                        time.sleep(0.4)
 
                         out_filename = f"{engine_basename}_{target_rpm}rpm_Lift.wav"
                         out_filepath = os.path.join(self.output_dir, out_filename)
 
-                        # Symmetric timing: capture equal margins before and after the snap
-                        half_dur = max(0.8, self.duration / 2.0)
-                        pre_snap_wait = half_dur + 0.6
-                        post_snap_wait = half_dur + 0.6
-                        raw_rec_dur = pre_snap_wait + post_snap_wait + 0.5
+                        # Record the full 3 seconds (or self.duration)
+                        raw_rec_dur = max(3.0, self.duration)
+                        pre_snap_wait = raw_rec_dur / 2.0  # 1.5s
 
                         if self.progress_cb:
                             self.progress_cb(current_task_idx, total_tasks, target_rpm, "Lift",
-                                             self.bridge.currentRpm, f"Recording Lift (100%→0%, {self.duration:.1f}s centered)...")
+                                             self.bridge.currentRpm, f"Recording Lift (3s capture → <1s transient crop)...")
 
-                        # Start recorder, capture pre-snap baseline, snap throttle to 0.0, capture post-snap
+                        # Start recorder for full 3 seconds
                         t_rec_start = time.time()
-                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur)])
+                        rec_proc = subprocess.Popen([recorder_exe, str(self.proc.pid), out_filepath, str(raw_rec_dur + 0.2)])
 
                         t_wait = time.time()
                         while time.time() - t_wait < pre_snap_wait:
                             if self.is_cancelled: break
-                            time.sleep(0.05)
+                            time.sleep(0.04)
 
+                        # At 1.5s midpoint, snap throttle to 0.0
                         t_snap = time.time()
                         expected_snap_sec = t_snap - t_rec_start
                         self.bridge.throttle = 0.0
                         self._log(f"Throttle snapped to 0% at {self.bridge.currentRpm:.0f} RPM (snap t={expected_snap_sec:.2f}s)")
 
-                        rec_proc.wait(timeout=raw_rec_dur + 10)
+                        rec_proc.wait(timeout=raw_rec_dur + 8)
 
+                        # Crop the 3-second recording to only save the lift transient (< 1s)
                         if os.path.exists(out_filepath) and os.path.getsize(out_filepath) > 1000:
                             cropped_dur = crop_transient_centered(
                                 out_filepath,
                                 mode="lift",
-                                target_duration=self.duration,
+                                target_duration=self.transient_duration,
                                 expected_time=expected_snap_sec
                             )
                             if cropped_dur:
                                 size_kb = os.path.getsize(out_filepath) // 1024
                                 half_dist = cropped_dur / 2.0
-                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s | Change centered at {half_dist:.2f}s, symmetric {half_dist:.2f}s margins)")
+                                self._log(f"Saved: {out_filename} ({size_kb} KB, {cropped_dur:.2f}s transient < 1s | Midpoint at {half_dist:.2f}s)")
                             else:
                                 size_kb = os.path.getsize(out_filepath) // 1024
                                 self._log(f"Saved: {out_filename} ({size_kb} KB, one-shot)")
